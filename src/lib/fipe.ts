@@ -32,7 +32,8 @@ export async function getFipePrice(
     const b = match(brands, brand);
     if (!b) return null;
 
-    const models = await get<Item[]>(`${BASE}/brands/${b.code}/models`);
+    const modelsRaw = await get<Item[] | { models: Item[] }>(`${BASE}/brands/${b.code}/models`);
+    const models = Array.isArray(modelsRaw) ? modelsRaw : (Array.isArray((modelsRaw as { models: Item[] }).models) ? (modelsRaw as { models: Item[] }).models : []);
     const m = match(models, model);
     if (!m) return null;
 
