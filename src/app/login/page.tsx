@@ -87,9 +87,9 @@ export default function Login() {
               name="token"
               type="text"
               inputMode="numeric"
-              placeholder="000000"
+              placeholder="00000000"
               required
-              maxLength={6}
+              maxLength={8}
               style={{ ...inputStyle, fontSize: 24, letterSpacing: 8, textAlign: "center" }}
             />
             {erro && <p style={{ fontSize: 13, color: "var(--danger)" }}>{erro}</p>}
