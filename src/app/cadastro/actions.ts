@@ -21,7 +21,7 @@ export async function signUp(formData: FormData) {
   });
 
   if (error) {
-    return { error: "Não foi possível enviar o link. Tente novamente." };
+    return { error: error.message };
   }
 
   return { success: true };
