@@ -28,6 +28,21 @@ export async function researchModelIssues(
 
   if (existing && existing.length > 0) return;
 
+  // Grava sentinel antes de chamar a API — garante fallback para genérico mesmo se timeout
+  await supabase.from("car_issues").insert({
+    brand,
+    model_pattern: modelKey,
+    year_from: 2000,
+    year_to: 2099,
+    km_from: 0,
+    km_to: 999999,
+    category: "_sentinel",
+    title: "_pesquisado",
+    description: "",
+    severity: "warn",
+    sort_order: 999,
+  });
+
   const [km_from, km_to] = kmBucket(km);
   const kmLabel =
     km < 30000 ? "até 30.000 km"
@@ -79,36 +94,21 @@ Gere entre 6 e 14 itens. Foque em falhas reais documentadas para este modelo e f
 
   const validCategories = ["motor", "transmissao", "suspensao", "freios", "pneus", "carroceria", "eletrica"];
 
-  const rows = Array.isArray(items) && items.length > 0
-    ? (items as Record<string, unknown>[]).map((item, idx) => ({
-        brand,
-        model_pattern: modelKey,
-        year_from: Math.max(2000, year - 3),
-        year_to: year + 3,
-        km_from,
-        km_to,
-        category: validCategories.includes(item.category as string) ? item.category : "motor",
-        title: String(item.title ?? "").slice(0, 100) || "Item sem título",
-        description: String(item.description ?? ""),
-        severity: item.severity === "critical" ? "critical" : "warn",
-        sort_order: Number(item.sort_order) || idx + 1,
-      }))
-    : // Sentinel: marca como pesquisado sem retornar itens
-      [
-        {
-          brand,
-          model_pattern: modelKey,
-          year_from: 2000,
-          year_to: 2099,
-          km_from: 0,
-          km_to: 999999,
-          category: "_sentinel",
-          title: "_pesquisado",
-          description: "",
-          severity: "warn",
-          sort_order: 999,
-        },
-      ];
-
-  await supabase.from("car_issues").insert(rows);
+  // Se Anthropic retornou resultados, insere os issues reais
+  if (Array.isArray(items) && items.length > 0) {
+    const rows = (items as Record<string, unknown>[]).map((item, idx) => ({
+      brand,
+      model_pattern: modelKey,
+      year_from: Math.max(2000, year - 3),
+      year_to: year + 3,
+      km_from,
+      km_to,
+      category: validCategories.includes(item.category as string) ? item.category : "motor",
+      title: String(item.title ?? "").slice(0, 100) || "Item sem título",
+      description: String(item.description ?? ""),
+      severity: item.severity === "critical" ? "critical" : "warn",
+      sort_order: Number(item.sort_order) || idx + 1,
+    }));
+    await supabase.from("car_issues").insert(rows);
+  }
 }
