@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { triggerResearch } from "./research-action";
 
 export default function ResearchLoader({
   brand,
@@ -28,7 +27,18 @@ export default function ResearchLoader({
     }
 
     sessionStorage.setItem(key, "1");
-    triggerResearch(brand, model, year, km).finally(() => router.refresh());
+
+    // Timeout de segurança: se a pesquisa demorar mais de 25s, avança mesmo assim
+    const timeout = setTimeout(() => router.refresh(), 25000);
+
+    fetch("/api/research", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand, model, year, km }),
+    }).finally(() => {
+      clearTimeout(timeout);
+      router.refresh();
+    });
   }, [brand, model, year, km, router]);
 
   // Animação de dots
