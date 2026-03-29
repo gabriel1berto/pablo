@@ -23,7 +23,7 @@ export async function researchModelIssues(
   const { data: existing } = await supabase
     .from("car_issues")
     .select("id")
-    .ilike("model_pattern", modelKey)
+    .ilike("model_pattern", `%${modelKey}%`)
     .limit(1);
 
   if (existing && existing.length > 0) return;

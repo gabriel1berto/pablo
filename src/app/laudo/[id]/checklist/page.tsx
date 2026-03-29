@@ -30,7 +30,7 @@ export default async function ChecklistPage({
   const { data: issues } = await supabase
     .from("car_issues")
     .select("id, category, title, description, severity")
-    .ilike("model_pattern", modelKey)
+    .ilike("model_pattern", `%${modelKey}%`)
     .neq("category", "_sentinel")
     .lte("year_from", laudo.year)
     .gte("year_to", laudo.year)
@@ -43,7 +43,7 @@ export default async function ChecklistPage({
   const { data: anyRow } = await supabase
     .from("car_issues")
     .select("id")
-    .ilike("model_pattern", modelKey)
+    .ilike("model_pattern", `%${modelKey}%`)
     .limit(1);
 
   const alreadyResearched = anyRow && anyRow.length > 0;
