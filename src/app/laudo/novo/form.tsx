@@ -96,7 +96,7 @@ function Combobox({
           {filtered.slice(0, 60).map((item) => (
             <div
               key={item.code}
-              onMouseDown={() => select(item)}
+              onPointerDown={(e) => { e.preventDefault(); select(item); }}
               style={{
                 padding: "10px 14px", fontSize: 14, cursor: "pointer",
                 color: item.code === value?.code ? "var(--accent)" : "var(--t1)",
@@ -250,7 +250,7 @@ export default function VeiculoForm() {
             <span style={{ fontWeight: 400, color: "var(--t4)", marginLeft: 6 }}>{availableYears.length} anos disponíveis</span>
           )}
         </label>
-        <select name="year" required style={inp}>
+        <select name="year" required style={inp} key={selectedModel?.code ?? "no-model"}>
           <option value="">Selecionar ano</option>
           {yearList.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>

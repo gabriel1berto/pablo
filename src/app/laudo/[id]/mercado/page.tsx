@@ -19,6 +19,7 @@ export default async function MercadoPage({ params }: { params: Promise<{ id: st
     .from("laudos")
     .select("brand, model, year, km, asking_price")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (!laudo) redirect("/laudo/novo");

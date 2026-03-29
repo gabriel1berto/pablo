@@ -63,6 +63,7 @@ export default function ChecklistForm({
     return open;
   });
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
   const getState = (id: number): State | null => states[id] ?? null;
   const setState = (id: number, s: State) =>
@@ -85,13 +86,19 @@ export default function ChecklistForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setErro("");
     setLoading(true);
     const fd = new FormData();
     issues.forEach((issue) => {
       fd.append("item_id", String(issue.id));
       fd.append(`item_state_${issue.id}`, states[issue.id] ?? "nd");
     });
-    await salvarChecklist(laudoId, fd);
+    const result = await salvarChecklist(laudoId, fd);
+    if (result?.error) {
+      setErro(result.error);
+      setLoading(false);
+    }
+    // On success salvarChecklist redirects server-side — no client handling needed
   }
 
   return (
@@ -247,14 +254,21 @@ export default function ChecklistForm({
       </div>
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>
-        <div style={{ fontSize: 12, color: "var(--t3)", marginBottom: 14, textAlign: "center" }}>
-          {answered} de {issues.length} itens verificados
-          {problemCount > 0 && (
+        <div style={{ fontSize: 12, color: answered === 0 ? "var(--warn)" : "var(--t3)", marginBottom: 14, textAlign: "center" }}>
+          {answered === 0
+            ? "Responda ao menos um item antes de continuar"
+            : `${answered} de ${issues.length} itens verificados`}
+          {answered > 0 && problemCount > 0 && (
             <span style={{ color: "var(--danger)", marginLeft: 8 }}>
               · {problemCount} problema{problemCount > 1 ? "s" : ""}
             </span>
           )}
         </div>
+        {erro && (
+          <div style={{ fontSize: 13, color: "var(--danger)", textAlign: "center", marginBottom: 10 }}>
+            {erro}
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading}

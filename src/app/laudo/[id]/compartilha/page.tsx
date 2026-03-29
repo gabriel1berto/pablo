@@ -28,7 +28,9 @@ const VERDICT_COLOR: Record<string, string> = {
 export default function CompartilhaPage() {
   const { id } = useParams<{ id: string }>();
   const [laudo, setLaudo] = useState<Laudo | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
   const [laudoCount, setLaudoCount] = useState(0);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function CompartilhaPage() {
       .eq("id", id)
       .single()
       .then(({ data }) => {
-        if (!data) return;
+        if (!data) { setNotFound(true); return; }
         setLaudo(data);
         client
           .from("laudos")
@@ -52,9 +54,16 @@ export default function CompartilhaPage() {
   const link = typeof window !== "undefined" ? window.location.origin + `/laudo/${id}` : "";
 
   function copyLink() {
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(link)
+      .then(() => {
+        setCopied(true);
+        setCopyError(false);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {
+        setCopyError(true);
+        setTimeout(() => setCopyError(false), 3000);
+      });
   }
 
   function whatsapp() {
@@ -67,11 +76,15 @@ export default function CompartilhaPage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
   }
 
+  if (notFound) return (
+    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "var(--t3)", fontSize: 14 }}>Laudo não encontrado.</div>
+    </main>
+  );
+
   if (!laudo) return (
     <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "var(--t3)", fontSize: 14 }}>
-        {laudo === null ? "Carregando..." : "Laudo não encontrado."}
-      </div>
+      <div style={{ color: "var(--t3)", fontSize: 14 }}>Carregando...</div>
     </main>
   );
 
@@ -145,7 +158,8 @@ export default function CompartilhaPage() {
             borderRadius: "var(--rs)", fontSize: 14, fontWeight: 700, cursor: "pointer", padding: "0 18px",
           }}
         >
-          <span style={{ fontSize: 18 }}>🔗</span> {copied ? "Link copiado!" : "Copiar link do laudo"}
+          <span style={{ fontSize: 18 }}>🔗</span>{" "}
+          {copied ? "Link copiado!" : copyError ? "Copie manualmente: " + link : "Copiar link do laudo"}
         </button>
       </div>
 

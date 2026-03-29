@@ -22,3 +22,7 @@ create policy "credits_select_own" on laudo_credits
 -- Inserção apenas pelo service role (webhook)
 create policy "credits_insert_service" on laudo_credits
   for insert with check (false);  -- bloqueado para anon/authenticated; webhook usa service role
+
+-- Update: usuário marca próprio crédito como usado ao criar laudo
+create policy "credits_update_own" on laudo_credits
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);

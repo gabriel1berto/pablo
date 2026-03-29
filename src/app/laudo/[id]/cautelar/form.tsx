@@ -61,14 +61,20 @@ export default function CautelarForm({ laudoId }: { laudoId: string }) {
     Object.fromEntries(ITEMS.map((i) => [i.key, "nd"]))
   );
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
   const set = (key: string, val: Status) =>
     setValues((prev) => ({ ...prev, [key]: val }));
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setErro("");
     setLoading(true);
-    await salvarCautelar(laudoId, new FormData(e.currentTarget));
+    const result = await salvarCautelar(laudoId, new FormData(e.currentTarget));
+    if (result?.error) {
+      setErro(result.error);
+      setLoading(false);
+    }
   }
 
   return (
@@ -129,7 +135,7 @@ export default function CautelarForm({ laudoId }: { laudoId: string }) {
                   transition: "all .12s",
                 }}
               >
-                ? N/V
+                Não vi
               </button>
             </div>
 
@@ -139,6 +145,11 @@ export default function CautelarForm({ laudoId }: { laudoId: string }) {
       })}
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>
+        {erro && (
+          <div style={{ fontSize: 13, color: "var(--danger)", textAlign: "center", marginBottom: 10 }}>
+            {erro}
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading}

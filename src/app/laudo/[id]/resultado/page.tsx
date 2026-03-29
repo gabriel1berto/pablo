@@ -160,9 +160,8 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
 
   const isVendedor = laudo.tipo === "vendedor";
 
-  if (!laudo.score) {
-    await supabase.from("laudos").update({ score, verdict: v.label }).eq("id", id);
-  }
+  // Always persist — handles re-visits after checklist changes
+  await supabase.from("laudos").update({ score, verdict: v.label }).eq("id", id);
 
   // Positive criticals: items marked OK that were known critical issues
   const positiveCriticals = (issues ?? []).filter((issue) => {
