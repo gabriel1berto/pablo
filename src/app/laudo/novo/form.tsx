@@ -6,6 +6,7 @@ import { criarLaudo } from "./actions";
 import { normalizeModelKey } from "@/lib/model-utils";
 
 type FipeItem = { code: string; name: string };
+type Tipo = "comprador" | "vendedor";
 
 const ANOS = Array.from({ length: 27 }, (_, i) => 2026 - i);
 const ESTADOS = [
@@ -26,6 +27,7 @@ const lbl: React.CSSProperties = {
 
 export default function VeiculoForm() {
   const router = useRouter();
+  const [tipo, setTipo] = useState<Tipo>("comprador");
   const [brands, setBrands] = useState<FipeItem[]>([]);
   const [models, setModels] = useState<FipeItem[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<FipeItem | null>(null);
@@ -35,7 +37,6 @@ export default function VeiculoForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [erro, setErro] = useState("");
 
-  // Carrega marcas na montagem
   useEffect(() => {
     fetch("/api/fipe/brands")
       .then((r) => r.json())
@@ -44,7 +45,6 @@ export default function VeiculoForm() {
       .finally(() => setLoadingBrands(false));
   }, []);
 
-  // Carrega modelos quando marca muda
   useEffect(() => {
     if (!selectedBrand) { setModels([]); return; }
     setLoadingModels(true);
@@ -63,10 +63,10 @@ export default function VeiculoForm() {
     setErro("");
 
     const fd = new FormData(e.currentTarget);
-    // Sobrescreve com valores normalizados
     fd.set("brand", selectedBrand.name);
     fd.set("model", normalizeModelKey(selectedModel.name));
-    fd.set("fipe_model_full", selectedModel.name); // nome completo para display
+    fd.set("fipe_model_full", selectedModel.name);
+    fd.set("tipo", tipo);
 
     const result = await criarLaudo(fd);
     if (result.error) {
@@ -77,8 +77,40 @@ export default function VeiculoForm() {
     }
   }
 
+  const isVendedor = tipo === "vendedor";
+
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+      {/* Tipo toggle */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 4 }}>
+        {(["comprador", "vendedor"] as Tipo[]).map((t) => {
+          const active = tipo === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTipo(t)}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "flex-start",
+                gap: 3, padding: "12px 14px",
+                background: active ? (t === "vendedor" ? "rgba(167,139,250,0.12)" : "rgba(0,212,170,0.1)") : "var(--bg2)",
+                border: `1.5px solid ${active ? (t === "vendedor" ? "rgba(167,139,250,0.4)" : "rgba(0,212,170,0.35)") : "rgba(255,255,255,0.07)"}`,
+                borderRadius: "var(--rs)", cursor: "pointer", textAlign: "left",
+                transition: "all .15s",
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 800, color: active ? (t === "vendedor" ? "#A78BFA" : "var(--accent)") : "var(--t2)" }}>
+                {t === "comprador" ? "Vou comprar" : "Vou vender"}
+              </span>
+              <span style={{ fontSize: 11, color: "var(--t4)", lineHeight: 1.4 }}>
+                {t === "comprador" ? "Avalio antes de fechar negócio" : "Laudo de transparência para o meu anúncio"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Marca + Ano */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
@@ -143,10 +175,16 @@ export default function VeiculoForm() {
         </div>
       </div>
 
-      {/* Preço pedido */}
+      {/* Preço */}
       <div>
-        <label style={lbl}>Preço pedido pelo vendedor</label>
-        <input name="asking_price" placeholder="Ex: R$ 48.000" style={inp} />
+        <label style={lbl}>
+          {isVendedor ? "Seu preço de venda" : "Preço pedido pelo vendedor"}
+        </label>
+        <input
+          name="asking_price"
+          placeholder={isVendedor ? "Ex: R$ 32.000" : "Ex: R$ 48.000"}
+          style={inp}
+        />
       </div>
 
       {/* Estado */}
@@ -157,6 +195,17 @@ export default function VeiculoForm() {
         </select>
       </div>
 
+      {/* Banner vendedor */}
+      {isVendedor && (
+        <div style={{
+          background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.2)",
+          borderRadius: "var(--rm)", padding: "10px 14px",
+          fontSize: 12, color: "var(--t3)", lineHeight: 1.55,
+        }}>
+          Preencha com honestidade. O laudo ficará associado ao seu anúncio e compradores podem verificar os dados.
+        </div>
+      )}
+
       {erro && <p style={{ fontSize: 13, color: "var(--danger)" }}>{erro}</p>}
 
       <div style={{ paddingTop: 8 }}>
@@ -166,14 +215,16 @@ export default function VeiculoForm() {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: "100%", height: 54,
-            background: status === "loading" ? "#00a884" : "var(--accent)",
+            background: status === "loading"
+              ? "#00a884"
+              : isVendedor ? "#A78BFA" : "var(--accent)",
             color: "#050505", border: "none", borderRadius: "var(--rs)",
             fontSize: 15, fontWeight: 800,
             cursor: status === "loading" ? "not-allowed" : "pointer",
             opacity: !selectedBrand || !selectedModel ? 0.6 : 1,
           }}
         >
-          {status === "loading" ? "Salvando..." : "Próximo →"}
+          {status === "loading" ? "Salvando..." : isVendedor ? "Criar laudo de venda →" : "Próximo →"}
         </button>
       </div>
     </form>

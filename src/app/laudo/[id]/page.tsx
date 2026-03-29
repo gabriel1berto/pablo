@@ -52,7 +52,7 @@ export default async function LaudoPublicoPage({
 
   const { data: laudo } = await service
     .from("laudos")
-    .select("id, user_id, brand, model, year, km, score, verdict, asking_price, fipe_price, state, created_at")
+    .select("id, user_id, brand, model, year, km, score, verdict, asking_price, fipe_price, state, created_at, tipo")
     .eq("id", id)
     .single();
 
@@ -175,6 +175,7 @@ export default async function LaudoPublicoPage({
       detail: CAUTELAR_DETAIL[c.item_key] ?? "",
     }));
 
+  const isVendedor = laudo.tipo === "vendedor";
   const vc = verdictColor(laudo.verdict ?? "");
   const date = new Date(laudo.created_at).toLocaleDateString("pt-BR");
 
@@ -202,6 +203,16 @@ export default async function LaudoPublicoPage({
         <div style={{ fontSize: 13, color: "var(--t3)" }}>
           {laudo.km.toLocaleString("pt-BR")} km{laudo.state ? ` · ${laudo.state}` : ""}
         </div>
+        {isVendedor && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8,
+            background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)",
+            borderRadius: 99, padding: "3px 10px",
+            fontSize: 11, fontWeight: 700, color: "#A78BFA",
+          }}>
+            Declarado pelo vendedor
+          </div>
+        )}
       </div>
 
       {/* Score */}
@@ -303,19 +314,43 @@ export default async function LaudoPublicoPage({
 
       {/* CTA */}
       <div style={{ marginTop: 16 }}>
-        <Link
-          href="/laudo/novo"
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "100%", height: 50, background: "var(--accent)", color: "#050505",
-            borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800, textDecoration: "none",
-          }}
-        >
-          Criar meu laudo grátis →
-        </Link>
-        <div style={{ fontSize: 11, color: "var(--t4)", textAlign: "center", marginTop: 10 }}>
-          Avalie qualquer carro usado antes de comprar
-        </div>
+        {isVendedor ? (
+          <>
+            <div style={{
+              background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.15)",
+              borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 12,
+              fontSize: 12, color: "var(--t3)", lineHeight: 1.6,
+            }}>
+              Este laudo foi preenchido pelo próprio vendedor. Faça sua inspeção independente antes de fechar negócio.
+            </div>
+            <Link
+              href="/laudo/novo"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%", height: 50, background: "var(--accent)", color: "#050505",
+                borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800, textDecoration: "none",
+              }}
+            >
+              Fazer minha própria inspeção →
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/laudo/novo"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%", height: 50, background: "var(--accent)", color: "#050505",
+                borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800, textDecoration: "none",
+              }}
+            >
+              Criar meu laudo grátis →
+            </Link>
+            <div style={{ fontSize: 11, color: "var(--t4)", textAlign: "center", marginTop: 10 }}>
+              Avalie qualquer carro usado antes de comprar
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

@@ -18,6 +18,7 @@ export async function criarLaudo(formData: FormData) {
   const asking_price_raw = (formData.get("asking_price") as string).replace(/\D/g, "");
   const asking_price = asking_price_raw ? parseInt(asking_price_raw) : null;
   const state = formData.get("state") as string;
+  const tipo = (formData.get("tipo") as string) === "vendedor" ? "vendedor" : "comprador";
 
   if (!brand || !model || !year || !km) {
     return { error: "Preencha todos os campos obrigatórios." };
@@ -25,7 +26,7 @@ export async function criarLaudo(formData: FormData) {
 
   const { data, error } = await supabase
     .from("laudos")
-    .insert({ user_id: user.id, brand, model, year, km, condition, asking_price, state })
+    .insert({ user_id: user.id, brand, model, year, km, condition, asking_price, state, tipo })
     .select("id")
     .single();
 

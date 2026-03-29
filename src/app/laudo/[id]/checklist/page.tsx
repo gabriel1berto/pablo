@@ -18,7 +18,7 @@ export default async function ChecklistPage({
 
   const { data: laudo } = await supabase
     .from("laudos")
-    .select("brand, model, year, km")
+    .select("brand, model, year, km, tipo")
     .eq("id", id)
     .eq("user_id", user.id)
     .single();
@@ -126,7 +126,9 @@ export default async function ChecklistPage({
                 {isGeneric
                   ? "Modelo fora da base. Checklist padrão para qualquer carro usado."
                   : `Problemas reais documentados para ${laudo.km.toLocaleString("pt-BR")} km.`}
-                {" "}Marque <strong>OK</strong> ou <strong>Problema</strong> em cada item.
+                {" "}{laudo.tipo === "vendedor"
+                  ? <>Preencha com honestidade o estado real do seu carro. Marque <strong>OK</strong> ou <strong>Problema</strong>.</>
+                  : <>Marque <strong>OK</strong> ou <strong>Problema</strong> em cada item.</>}
               </div>
             </div>
             <ChecklistForm laudoId={id} issues={displayIssues} />

@@ -158,6 +158,8 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
   score = Math.round(Math.max(0, Math.min(10, score)) * 10) / 10;
   const v = verdict(score);
 
+  const isVendedor = laudo.tipo === "vendedor";
+
   if (!laudo.score) {
     await supabase.from("laudos").update({ score, verdict: v.label }).eq("id", id);
   }
@@ -173,7 +175,16 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
   const withCost = problemFindings.filter((f) => f.repair_cost);
   let negoTip: string;
 
-  if (withCost.length > 0) {
+  if (isVendedor) {
+    if (problemFindings.length > 0) {
+      const costLines = withCost.map((f) => `${f.text}${f.repair_cost ? ` (${f.repair_cost})` : ""}`).join("; ");
+      negoTip = `Seu laudo aponta ${problemFindings.length} ponto${problemFindings.length > 1 ? "s" : ""} a declarar: ${costLines}. Transparência sobre esses itens protege você legalmente e acelera a venda.`;
+    } else if (diffPct > 5 && laudo.asking_price && laudo.fipe_price) {
+      negoTip = `Nenhum problema identificado. Seu preço está ${diffPct.toFixed(1)}% acima da FIPE — considere ajustar ou justificar os diferenciais do carro.`;
+    } else {
+      negoTip = "Nenhum problema identificado. Carro em bom estado declarado. Compartilhe este laudo no seu anúncio para aumentar a confiança dos compradores.";
+    }
+  } else if (withCost.length > 0) {
     const costLines = withCost.map((f) => `${f.text} (${f.repair_cost})`).join("; ");
     negoTip = `Negocie desconto para cobrir ${problemFindings.length} problema${problemFindings.length > 1 ? "s" : ""} identificado${problemFindings.length > 1 ? "s" : ""}: ${costLines}.`;
     if (diffPct > 5 && laudo.asking_price && laudo.fipe_price) {
@@ -332,11 +343,13 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
           href={`/laudo/${id}/compartilha`}
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: "100%", height: 54, background: "var(--accent)", color: "#050505",
+            width: "100%", height: 54,
+            background: isVendedor ? "#A78BFA" : "var(--accent)",
+            color: "#050505",
             borderRadius: "var(--rs)", fontSize: 15, fontWeight: 800, textDecoration: "none",
           }}
         >
-          Salvar laudo →
+          {isVendedor ? "Compartilhar no anúncio →" : "Salvar laudo →"}
         </Link>
         <Link
           href="/laudos"

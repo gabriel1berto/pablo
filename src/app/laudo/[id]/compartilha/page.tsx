@@ -15,6 +15,7 @@ type Laudo = {
   verdict: string;
   created_at: string;
   user_id: string;
+  tipo: string;
 };
 
 const VERDICT_COLOR: Record<string, string> = {
@@ -34,7 +35,7 @@ export default function CompartilhaPage() {
     const client = createClient();
     client
       .from("laudos")
-      .select("id, brand, model, year, km, score, verdict, created_at, user_id")
+      .select("id, brand, model, year, km, score, verdict, created_at, user_id, tipo")
       .eq("id", id)
       .single()
       .then(({ data }) => {
@@ -57,8 +58,11 @@ export default function CompartilhaPage() {
   }
 
   function whatsapp() {
+    const isVendedor = laudo?.tipo === "vendedor";
     const text = laudo
-      ? `Laudo Pablo — ${laudo.brand} ${laudo.model} ${laudo.year}\nScore: ${laudo.score}/10 · ${laudo.verdict}\n${link}`
+      ? isVendedor
+        ? `Vistoriei meu ${laudo.brand} ${laudo.model} ${laudo.year} com o Pablo.\nScore: ${laudo.score}/10 · ${laudo.verdict}\nConfira o laudo completo: ${link}`
+        : `Laudo Pablo — ${laudo.brand} ${laudo.model} ${laudo.year}\nScore: ${laudo.score}/10 · ${laudo.verdict}\n${link}`
       : link;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
   }
@@ -73,13 +77,18 @@ export default function CompartilhaPage() {
 
   const verdictColor = VERDICT_COLOR[laudo.verdict] ?? "var(--warn)";
   const date = new Date(laudo.created_at).toLocaleDateString("pt-BR");
+  const isVendedor = laudo.tipo === "vendedor";
 
   return (
     <main style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", padding: "52px 24px 64px" }}>
       <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 4 }}>
-        Laudo pronto
+        {isVendedor ? "Laudo pronto para o seu anúncio" : "Laudo pronto"}
       </h1>
-      <p style={{ fontSize: 14, color: "var(--t2)", marginBottom: 28 }}>Salve ou compartilhe antes de fechar.</p>
+      <p style={{ fontSize: 14, color: "var(--t2)", marginBottom: 28 }}>
+        {isVendedor
+          ? "Compartilhe o link no seu anúncio para passar mais credibilidade."
+          : "Salve ou compartilhe antes de fechar."}
+      </p>
 
       {/* Preview card */}
       <div style={{ background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: 20, overflow: "hidden", marginBottom: 24 }}>
