@@ -140,6 +140,16 @@ export default function CompartilhaPage() {
         </button>
       </div>
 
+      {/* Link de volta */}
+      <div style={{ marginBottom: 20 }}>
+        <a
+          href={`/laudo/${id}/resultado`}
+          style={{ fontSize: 13, color: "var(--t3)", textDecoration: "none" }}
+        >
+          ← Voltar ao resultado
+        </a>
+      </div>
+
       {/* Upsell — only shown after first laudo */}
       {laudoCount >= 1 && (
         <div style={{ background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: "var(--rm)", padding: "16px 18px" }}>

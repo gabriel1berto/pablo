@@ -19,6 +19,20 @@ export async function signUp(formData: FormData) {
   return { success: true };
 }
 
+export async function signIn(formData: FormData) {
+  const email = formData.get("email") as string;
+  if (!email) return { error: "Preencha o e-mail." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false },
+  });
+
+  if (error) return { error: "E-mail não cadastrado. Crie uma conta primeiro." };
+  return { success: true };
+}
+
 export async function verifyOtpCode(email: string, token: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.verifyOtp({

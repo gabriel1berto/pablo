@@ -34,16 +34,20 @@ export async function getFipePrice(
 
     const modelsRaw = await get<Item[] | { models: Item[] }>(`${BASE}/brands/${b.code}/models`);
     const models = Array.isArray(modelsRaw) ? modelsRaw : (Array.isArray((modelsRaw as { models: Item[] }).models) ? (modelsRaw as { models: Item[] }).models : []);
-    const m = match(models, model);
-    if (!m) return null;
 
-    const years = await get<Item[]>(`${BASE}/brands/${b.code}/models/${m.code}/years`);
-    const y = years.find((yr) => yr.name.startsWith(String(year)));
-    if (!y) return null;
+    const q = model.toLowerCase();
+    const candidates = models.filter((i) => i.name.toLowerCase().includes(q));
 
-    return await get<FipeResult>(
-      `${BASE}/brands/${b.code}/models/${m.code}/years/${y.code}`
-    );
+    for (const m of candidates) {
+      const years = await get<Item[]>(`${BASE}/brands/${b.code}/models/${m.code}/years`);
+      const y = years.find((yr) => yr.name.startsWith(String(year)));
+      if (!y) continue;
+      return await get<FipeResult>(
+        `${BASE}/brands/${b.code}/models/${m.code}/years/${y.code}`
+      );
+    }
+
+    return null;
   } catch {
     return null;
   }

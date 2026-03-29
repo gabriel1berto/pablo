@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signUp, verifyOtpCode } from "@/app/cadastro/actions";
+import { signIn, verifyOtpCode } from "@/app/cadastro/actions";
 
 export default function Login() {
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "verifying" | "error">("idle");
@@ -14,7 +14,7 @@ export default function Login() {
     setStatus("loading");
     const fd = new FormData(e.currentTarget);
     const emailValue = fd.get("email") as string;
-    const result = await signUp(fd);
+    const result = await signIn(fd);
     if (result?.error) {
       setErro(result.error);
       setStatus("error");

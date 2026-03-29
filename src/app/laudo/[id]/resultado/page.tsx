@@ -11,6 +11,15 @@ const CAUTELAR_LABEL: Record<string, string> = {
   manutencoes: "Manutenções atrasadas ou sem comprovante",
 };
 
+const CAUTELAR_DETAIL: Record<string, string> = {
+  crlv: "Veículo com documentação irregular pode ser apreendido. O comprador assume o risco e eventuais dívidas.",
+  multas: "Multas vinculadas ao veículo (não ao condutor) são transferidas automaticamente ao novo proprietário.",
+  sinistro: "Histórico de batida pode indicar reparos ocultos que comprometem estrutura e segurança passiva.",
+  gravame: "Veículo com financiamento ativo — a venda sem quitação é ilegal e o carro pode ser retomado pelo banco.",
+  recall: "Defeito reconhecido pelo fabricante ainda não corrigido. Pode representar risco à segurança.",
+  manutencoes: "Sem comprovante de revisão não há como atestar o estado real de motor, câmbio e componentes críticos.",
+};
+
 const SEV_COLOR: Record<string, string> = {
   critical: "var(--danger)",
   warn: "var(--warn)",
@@ -58,7 +67,7 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
 
   // ── Score calculation ──────────────────────────────────────
   let score = 10;
-  type Finding = { text: string; detail?: string; severity: "critical" | "warn" | "ok" };
+  type Finding = { text: string; detail?: string; severity: "critical" | "warn" | "ok"; category: string };
   const findings: Finding[] = [];
 
   // Checklist — usa 3 estados: ok / problema / nd
@@ -69,10 +78,10 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
     if (state === "problema") {
       if (issue.severity === "critical") {
         score -= 2.5;
-        findings.push({ text: issue.title, detail: issue.description, severity: "critical" });
+        findings.push({ text: issue.title, detail: issue.description, severity: "critical", category: issue.category ?? "Inspeção" });
       } else if (issue.severity === "warn") {
         score -= 1.2;
-        findings.push({ text: issue.title, detail: issue.description, severity: "warn" });
+        findings.push({ text: issue.title, detail: issue.description, severity: "warn", category: issue.category ?? "Inspeção" });
       }
     } else if (state === "nd") {
       // Penalidade menor por não verificado — incerteza
@@ -86,7 +95,12 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
   for (const c of cautelarItems) {
     if (c.notes === "atencao") {
       score -= 1.5;
-      findings.push({ text: CAUTELAR_LABEL[c.item_key] ?? c.item_key, severity: "critical" });
+      findings.push({
+        text: CAUTELAR_LABEL[c.item_key] ?? c.item_key,
+        detail: CAUTELAR_DETAIL[c.item_key],
+        severity: "critical",
+        category: "Documentação",
+      });
     } else if (c.notes === "nd") {
       score -= 0.4;
     }
@@ -98,15 +112,15 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
     diffPct = ((laudo.asking_price - laudo.fipe_price) / laudo.fipe_price) * 100;
     if (diffPct > 20) {
       score -= 2.0;
-      findings.push({ text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`, severity: "critical" });
+      findings.push({ text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`, detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)} · diferença de ${fmt(laudo.asking_price - laudo.fipe_price)}`, severity: "critical", category: "Precificação" });
     } else if (diffPct > 10) {
       score -= 1.0;
-      findings.push({ text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`, severity: "warn" });
+      findings.push({ text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`, detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)} · diferença de ${fmt(laudo.asking_price - laudo.fipe_price)}`, severity: "warn", category: "Precificação" });
     } else if (diffPct > 5) {
       score -= 0.5;
-      findings.push({ text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`, severity: "warn" });
+      findings.push({ text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`, detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)} · diferença de ${fmt(laudo.asking_price - laudo.fipe_price)}`, severity: "warn", category: "Precificação" });
     } else if (diffPct < 0) {
-      findings.push({ text: `Preço ${Math.abs(diffPct).toFixed(1)}% abaixo da FIPE — bom negócio`, severity: "ok" });
+      findings.push({ text: `Preço ${Math.abs(diffPct).toFixed(1)}% abaixo da FIPE — bom negócio`, detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)}`, severity: "ok", category: "Precificação" });
     }
   }
 
@@ -151,35 +165,57 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      {/* Findings */}
-      {findings.length > 0 && (
-        <>
-          <div style={{ height: 1, background: "var(--bd)", marginBottom: 20 }} />
-          <div style={{ fontSize: 11, fontWeight: 800, color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4 }}>
-            Achados
-          </div>
-          {findings.map((f, i) => (
-            <div key={i} style={{ padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <div style={{ width: 7, height: 7, borderRadius: "50%", background: SEV_COLOR[f.severity], flexShrink: 0, marginTop: 5 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: "var(--t1)", fontWeight: 600, lineHeight: 1.4 }}>{f.text}</div>
-                  {f.detail && (
-                    <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 3, lineHeight: 1.45 }}>{f.detail}</div>
-                  )}
-                </div>
-                <span style={{
-                  fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99, flexShrink: 0,
-                  background: f.severity === "critical" ? "var(--dg)" : f.severity === "warn" ? "var(--wg)" : "var(--og)",
-                  color: SEV_COLOR[f.severity],
-                }}>
-                  {f.severity === "critical" ? "Crítico" : f.severity === "warn" ? "Atenção" : "OK"}
-                </span>
-              </div>
+      {/* Findings — agrupados por categoria */}
+      {findings.length > 0 && (() => {
+        const groups: Record<string, typeof findings> = {};
+        for (const f of findings) {
+          if (!groups[f.category]) groups[f.category] = [];
+          groups[f.category].push(f);
+        }
+        return (
+          <>
+            <div style={{ height: 1, background: "var(--bd)", marginBottom: 24 }} />
+            <div style={{ fontSize: 11, fontWeight: 800, color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 16 }}>
+              Problemas identificados
             </div>
-          ))}
-        </>
-      )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {Object.entries(groups).map(([category, items]) => (
+                <div key={category}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 8 }}>
+                    {category}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {items.map((f, i) => (
+                      <div key={i} style={{
+                        background: "var(--bg2)", border: `1px solid ${f.severity === "critical" ? "rgba(239,68,68,0.2)" : f.severity === "warn" ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
+                        borderRadius: "var(--rm)", padding: "14px 16px",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", lineHeight: 1.4, flex: 1 }}>
+                            {f.text}
+                          </div>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99, flexShrink: 0, whiteSpace: "nowrap",
+                            background: f.severity === "critical" ? "var(--dg)" : f.severity === "warn" ? "var(--wg)" : "var(--og)",
+                            color: SEV_COLOR[f.severity],
+                          }}>
+                            {f.severity === "critical" ? "Crítico" : f.severity === "warn" ? "Atenção" : "OK"}
+                          </span>
+                        </div>
+                        {f.detail && (
+                          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 8, lineHeight: 1.55 }}>
+                            {f.detail}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Negotiation */}
       <div style={{ marginTop: 24, background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)", padding: "16px 18px" }}>
@@ -190,7 +226,7 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* CTA */}
-      <div style={{ marginTop: 32 }}>
+      <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
         <Link
           href={`/laudo/${id}/compartilha`}
           style={{
@@ -200,6 +236,17 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
           }}
         >
           Salvar laudo →
+        </Link>
+        <Link
+          href="/laudos"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "100%", height: 48, background: "var(--bg2)", color: "var(--t2)",
+            border: "1px solid var(--bd)", borderRadius: "var(--rs)",
+            fontSize: 14, fontWeight: 600, textDecoration: "none",
+          }}
+        >
+          Ver meus laudos
         </Link>
       </div>
     </main>
