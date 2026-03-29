@@ -86,9 +86,9 @@ export default function Login() {
               name="token"
               type="text"
               inputMode="numeric"
-              placeholder="000000"
+              placeholder="00000000"
               required
-              maxLength={6}
+              maxLength={8}
               autoFocus
               style={{ ...inp, fontSize: 18, letterSpacing: 4, textAlign: "center" }}
             />
