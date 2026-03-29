@@ -25,9 +25,10 @@ export async function salvarChecklist(laudoId: string, formData: FormData) {
     };
   });
 
-  await supabase.from("laudo_items").delete().eq("laudo_id", laudoId).eq("category", "checklist");
-  const { error } = await supabase.from("laudo_items").insert(items);
+  const { error: delError } = await supabase.from("laudo_items").delete().eq("laudo_id", laudoId).eq("category", "checklist");
+  if (delError) return { error: "Erro ao salvar. Tente novamente." };
 
+  const { error } = await supabase.from("laudo_items").insert(items);
   if (error) return { error: "Erro ao salvar. Tente novamente." };
 
   redirect(`/laudo/${laudoId}/cautelar`);

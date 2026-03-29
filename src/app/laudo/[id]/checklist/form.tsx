@@ -271,13 +271,14 @@ export default function ChecklistForm({
         )}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || answered === 0}
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: "100%", height: 54,
             background: loading ? "#00a884" : "var(--accent)", color: "#050505",
             border: "none", borderRadius: "var(--rs)", fontSize: 15, fontWeight: 800,
-            cursor: loading ? "not-allowed" : "pointer",
+            cursor: loading || answered === 0 ? "not-allowed" : "pointer",
+            opacity: answered === 0 ? 0.5 : 1,
           }}
         >
           {loading ? "Salvando..." : "Próximo →"}

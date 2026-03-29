@@ -185,7 +185,7 @@ export default function CompartilhaPage() {
       </div>
 
       {/* Upsell — only shown after first laudo */}
-      {laudoCount >= 1 && (
+      {laudoCount >= 2 && (
         <div style={{ background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: "var(--rm)", padding: "16px 18px" }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 5 }}>Próximo laudo por R$ 100</div>
           <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>

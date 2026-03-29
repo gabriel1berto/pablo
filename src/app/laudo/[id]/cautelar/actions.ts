@@ -23,9 +23,10 @@ export async function salvarCautelar(laudoId: string, formData: FormData) {
     notes: formData.get(key) as string,
   }));
 
-  await supabase.from("laudo_items").delete().eq("laudo_id", laudoId).eq("category", "cautelar");
-  const { error } = await supabase.from("laudo_items").insert(items);
+  const { error: delError } = await supabase.from("laudo_items").delete().eq("laudo_id", laudoId).eq("category", "cautelar");
+  if (delError) return { error: "Erro ao salvar. Tente novamente." };
 
+  const { error } = await supabase.from("laudo_items").insert(items);
   if (error) return { error: "Erro ao salvar. Tente novamente." };
 
   redirect(`/laudo/${laudoId}/mercado`);
