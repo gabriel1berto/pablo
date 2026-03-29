@@ -3,12 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function LaudoLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession is local (reads cookie) — no network call, safe for display-only purposes.
+  // Individual pages use getUser() (network) for actual auth enforcement.
+  const { data: { session } } = await supabase.auth.getSession();
 
   return (
     <>
       {children}
-      {user && (
+      {session && (
         <Link
           href="/laudos"
           style={{

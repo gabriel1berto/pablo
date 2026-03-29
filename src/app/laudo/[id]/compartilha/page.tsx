@@ -159,9 +159,20 @@ export default function CompartilhaPage() {
           }}
         >
           <span style={{ fontSize: 18 }}>🔗</span>{" "}
-          {copied ? "Link copiado!" : copyError ? "Copie manualmente: " + link : "Copiar link do laudo"}
+          {copied ? "Link copiado!" : "Copiar link do laudo"}
         </button>
       </div>
+
+      {copyError && (
+        <div style={{
+          background: "var(--bg2)", border: "1px solid var(--bd)",
+          borderRadius: "var(--rs)", padding: "10px 14px", marginTop: -6,
+          fontSize: 11, color: "var(--t3)", lineHeight: 1.5, wordBreak: "break-all",
+        }}>
+          Não foi possível copiar automaticamente. Copie o link abaixo:<br />
+          <span style={{ color: "var(--t1)", fontWeight: 600 }}>{link}</span>
+        </div>
+      )}
 
       {/* Link de volta */}
       <div style={{ marginBottom: 20 }}>

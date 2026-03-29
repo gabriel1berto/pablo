@@ -84,7 +84,7 @@ export default async function MeusLaudosPage() {
             return (
               <Link
                 key={laudo.id}
-                href={laudo.score ? `/laudo/${laudo.id}/resultado` : `/laudo/${laudo.id}`}
+                href={laudo.score ? `/laudo/${laudo.id}/resultado` : `/laudo/${laudo.id}/checklist`}
                 style={{ textDecoration: "none" }}
               >
                 <div style={{

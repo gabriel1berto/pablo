@@ -160,8 +160,11 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
 
   const isVendedor = laudo.tipo === "vendedor";
 
-  // Always persist — handles re-visits after checklist changes
-  await supabase.from("laudos").update({ score, verdict: v.label }).eq("id", id);
+  // Persist score only when checklist has been answered (guards against direct URL access)
+  const hasAnswers = checklistItems.some((i) => i.notes === "ok" || i.notes === "problema");
+  if (hasAnswers) {
+    await supabase.from("laudos").update({ score, verdict: v.label }).eq("id", id);
+  }
 
   // Positive criticals: items marked OK that were known critical issues
   const positiveCriticals = (issues ?? []).filter((issue) => {
