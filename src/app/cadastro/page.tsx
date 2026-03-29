@@ -81,18 +81,18 @@ export default function Cadastro() {
           <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.6px", marginBottom: 10 }}>
             Verifique seu e-mail
           </h2>
-          <p style={{ fontSize: 15, color: "var(--t2)", lineHeight: 1.6, marginBottom: 28 }}>
-            Enviamos um código de 6 dígitos para <strong>{email}</strong>.
+          <p style={{ fontSize: 14, color: "var(--t2)", lineHeight: 1.6, marginBottom: 24 }}>
+            Código enviado para <strong>{email}</strong>.
           </p>
           <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <input
               name="token"
               type="text"
               inputMode="numeric"
-              placeholder="00000000"
+              placeholder="000000"
               required
-              maxLength={8}
-              style={{ ...inputStyle, fontSize: 24, letterSpacing: 8, textAlign: "center" }}
+              maxLength={6}
+              style={{ ...inputStyle, fontSize: 18, letterSpacing: 4, textAlign: "center" }}
             />
             {errorMsg && <p style={{ fontSize: 13, color: "var(--danger)" }}>{errorMsg}</p>}
             <button type="submit" disabled={status === "verifying"} style={btnStyle(status === "verifying")}>

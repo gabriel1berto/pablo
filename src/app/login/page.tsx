@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn, verifyOtpCode } from "@/app/cadastro/actions";
+import { signIn } from "@/app/cadastro/actions";
 
 export default function Login() {
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "verifying" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
   const [erro, setErro] = useState("");
   const [email, setEmail] = useState("");
 
@@ -20,18 +20,6 @@ export default function Login() {
       setStatus("error");
     } else {
       setEmail(emailValue);
-      setStatus("sent");
-    }
-  }
-
-  async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setStatus("verifying");
-    const formData = new FormData(e.currentTarget);
-    const token = (formData.get("token") as string).trim();
-    const result = await verifyOtpCode(email, token);
-    if (result?.error) {
-      setErro(result.error);
       setStatus("sent");
     }
   }
@@ -73,31 +61,15 @@ export default function Login() {
         </Link>
       </div>
 
-      {status === "sent" || status === "verifying" ? (
+      {status === "sent" ? (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingBottom: 80 }}>
-          <div style={{ fontSize: 32, marginBottom: 24 }}>✉️</div>
           <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.6px", marginBottom: 10 }}>
-            Verifique seu e-mail
+            Link enviado
           </h2>
           <p style={{ fontSize: 15, color: "var(--t2)", lineHeight: 1.6, marginBottom: 28 }}>
-            Enviamos um código de 6 dígitos para <strong>{email}</strong>.
+            Abrimos um link de acesso para <strong>{email}</strong>. Clique nele para entrar.
           </p>
-          <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <input
-              name="token"
-              type="text"
-              inputMode="numeric"
-              placeholder="00000000"
-              required
-              maxLength={8}
-              style={{ ...inputStyle, fontSize: 24, letterSpacing: 8, textAlign: "center" }}
-            />
-            {erro && <p style={{ fontSize: 13, color: "var(--danger)" }}>{erro}</p>}
-            <button type="submit" disabled={status === "verifying"} style={btnStyle(status === "verifying")}>
-              {status === "verifying" ? "Verificando..." : "Confirmar código →"}
-            </button>
-          </form>
-          <p style={{ fontSize: 13, color: "var(--t3)", marginTop: 16, textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "var(--t3)" }}>
             Não recebeu?{" "}
             <button onClick={() => setStatus("idle")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
               Tentar novamente
