@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "@/app/cadastro/actions";
+import { signIn, verifyOtpCode } from "@/app/cadastro/actions";
 
 export default function Login() {
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "verifying" | "error">("idle");
   const [erro, setErro] = useState("");
   const [email, setEmail] = useState("");
 
@@ -24,7 +24,19 @@ export default function Login() {
     }
   }
 
-  const inputStyle = {
+  async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setStatus("verifying");
+    const fd = new FormData(e.currentTarget);
+    const token = (fd.get("token") as string).trim();
+    const result = await verifyOtpCode(email, token);
+    if (result?.error) {
+      setErro(result.error);
+      setStatus("sent");
+    }
+  }
+
+  const inp = {
     height: 50,
     background: "var(--bg2)",
     border: "1px solid rgba(255,255,255,0.09)",
@@ -36,7 +48,7 @@ export default function Login() {
     width: "100%",
   };
 
-  const btnStyle = (loading: boolean) => ({
+  const btn = (loading: boolean) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -61,18 +73,34 @@ export default function Login() {
         </Link>
       </div>
 
-      {status === "sent" ? (
+      {status === "sent" || status === "verifying" ? (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingBottom: 80 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.6px", marginBottom: 10 }}>
-            Link enviado
+          <h2 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 8 }}>
+            Código enviado
           </h2>
-          <p style={{ fontSize: 15, color: "var(--t2)", lineHeight: 1.6, marginBottom: 28 }}>
-            Abrimos um link de acesso para <strong>{email}</strong>. Clique nele para entrar.
+          <p style={{ fontSize: 14, color: "var(--t2)", lineHeight: 1.6, marginBottom: 24 }}>
+            Digite o código que chegou em <strong>{email}</strong>.
           </p>
-          <p style={{ fontSize: 13, color: "var(--t3)" }}>
+          <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <input
+              name="token"
+              type="text"
+              inputMode="numeric"
+              placeholder="000000"
+              required
+              maxLength={6}
+              autoFocus
+              style={{ ...inp, fontSize: 18, letterSpacing: 4, textAlign: "center" }}
+            />
+            {erro && <p style={{ fontSize: 13, color: "var(--danger)", margin: 0 }}>{erro}</p>}
+            <button type="submit" disabled={status === "verifying"} style={btn(status === "verifying")}>
+              {status === "verifying" ? "Verificando..." : "Entrar →"}
+            </button>
+          </form>
+          <p style={{ fontSize: 13, color: "var(--t3)", marginTop: 16, textAlign: "center" }}>
             Não recebeu?{" "}
             <button onClick={() => setStatus("idle")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
-              Tentar novamente
+              Reenviar
             </button>
           </p>
         </div>
@@ -83,21 +111,21 @@ export default function Login() {
               Entrar
             </h1>
             <p style={{ fontSize: 14, color: "var(--t2)", lineHeight: 1.6 }}>
-              Vamos enviar um código de acesso para o seu e-mail.
+              Vamos enviar um código para o seu e-mail.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 32 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <label style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)" }}>E-mail</label>
-              <input name="email" type="email" placeholder="seu@email.com" required style={inputStyle} />
+              <input name="email" type="email" placeholder="seu@email.com" required style={inp} />
             </div>
 
             {status === "error" && <p style={{ fontSize: 13, color: "var(--danger)" }}>{erro}</p>}
 
             <div style={{ paddingTop: 8, paddingBottom: 48 }}>
-              <button type="submit" disabled={status === "loading"} style={btnStyle(status === "loading")}>
-                {status === "loading" ? "Enviando..." : "Enviar código de acesso →"}
+              <button type="submit" disabled={status === "loading"} style={btn(status === "loading")}>
+                {status === "loading" ? "Enviando..." : "Enviar código →"}
               </button>
               <p style={{ textAlign: "center", fontSize: 13, color: "var(--t3)", marginTop: 20 }}>
                 Não tem conta?{" "}
