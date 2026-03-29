@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { criarLaudo } from "./actions";
 import { normalizeModelKey } from "@/lib/model-utils";
@@ -8,7 +8,6 @@ import { normalizeModelKey } from "@/lib/model-utils";
 type FipeItem = { code: string; name: string };
 type Tipo = "comprador" | "vendedor";
 
-const ANOS = Array.from({ length: 27 }, (_, i) => 2026 - i);
 const ESTADOS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
   "MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
@@ -25,15 +24,107 @@ const lbl: React.CSSProperties = {
   marginBottom: 6, display: "block",
 };
 
+function Combobox({
+  items,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}: {
+  items: FipeItem[];
+  value: FipeItem | null;
+  onChange: (item: FipeItem | null) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  const [text, setText] = useState(value?.name ?? "");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Sync text when value changes externally (e.g. reset on brand change)
+  useEffect(() => {
+    setText(value?.name ?? "");
+  }, [value]);
+
+  const filtered = text.length < 1
+    ? items
+    : items.filter((i) => i.name.toLowerCase().includes(text.toLowerCase()));
+
+  function select(item: FipeItem) {
+    setText(item.name);
+    onChange(item);
+    setOpen(false);
+  }
+
+  function handleBlur(e: React.FocusEvent) {
+    if (ref.current?.contains(e.relatedTarget as Node)) return;
+    setOpen(false);
+    // If typed text doesn't match a selection, clear
+    if (!items.find((i) => i.name === text)) {
+      setText("");
+      onChange(null);
+    }
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative" }} onBlur={handleBlur}>
+      <input
+        type="text"
+        value={text}
+        disabled={disabled}
+        placeholder={disabled ? "Aguarde..." : placeholder}
+        autoComplete="off"
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange(null);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        style={{
+          ...inp,
+          opacity: disabled ? 0.5 : 1,
+          cursor: disabled ? "not-allowed" : "text",
+        }}
+      />
+      {open && !disabled && filtered.length > 0 && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
+          background: "var(--bg2)", border: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: "var(--rs)", maxHeight: 220, overflowY: "auto",
+          zIndex: 50, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+        }}>
+          {filtered.slice(0, 60).map((item) => (
+            <div
+              key={item.code}
+              onMouseDown={() => select(item)}
+              style={{
+                padding: "10px 14px", fontSize: 14, cursor: "pointer",
+                color: item.code === value?.code ? "var(--accent)" : "var(--t1)",
+                background: item.code === value?.code ? "rgba(0,212,170,0.08)" : "transparent",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg3)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = item.code === value?.code ? "rgba(0,212,170,0.08)" : "transparent")}
+            >
+              {item.name}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function VeiculoForm() {
   const router = useRouter();
   const [tipo, setTipo] = useState<Tipo>("comprador");
   const [brands, setBrands] = useState<FipeItem[]>([]);
   const [models, setModels] = useState<FipeItem[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[] | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<FipeItem | null>(null);
   const [selectedModel, setSelectedModel] = useState<FipeItem | null>(null);
   const [loadingBrands, setLoadingBrands] = useState(true);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [loadingYears, setLoadingYears] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [erro, setErro] = useState("");
 
@@ -46,15 +137,26 @@ export default function VeiculoForm() {
   }, []);
 
   useEffect(() => {
-    if (!selectedBrand) { setModels([]); return; }
+    if (!selectedBrand) { setModels([]); setSelectedModel(null); return; }
     setLoadingModels(true);
     setSelectedModel(null);
+    setAvailableYears(null);
     fetch(`/api/fipe/models?brand=${selectedBrand.code}`)
       .then((r) => r.json())
       .then((data: FipeItem[]) => setModels(data))
       .catch(() => setModels([]))
       .finally(() => setLoadingModels(false));
   }, [selectedBrand]);
+
+  useEffect(() => {
+    if (!selectedBrand || !selectedModel) { setAvailableYears(null); return; }
+    setLoadingYears(true);
+    fetch(`/api/fipe/years?brand=${selectedBrand.code}&model=${selectedModel.code}`)
+      .then((r) => r.json())
+      .then((data: number[]) => setAvailableYears(data.length > 0 ? data : null))
+      .catch(() => setAvailableYears(null))
+      .finally(() => setLoadingYears(false));
+  }, [selectedBrand, selectedModel]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,6 +180,10 @@ export default function VeiculoForm() {
   }
 
   const isVendedor = tipo === "vendedor";
+
+  // Build year list: FIPE years if available, else static fallback
+  const yearList = availableYears
+    ?? Array.from({ length: 27 }, (_, i) => 2026 - i);
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -111,52 +217,42 @@ export default function VeiculoForm() {
         })}
       </div>
 
-      {/* Marca + Ano */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <div>
-          <label style={lbl}>Marca *</label>
-          <select
-            required
-            disabled={loadingBrands}
-            value={selectedBrand?.code ?? ""}
-            onChange={(e) => {
-              const b = brands.find((b) => b.code === e.target.value) ?? null;
-              setSelectedBrand(b);
-            }}
-            style={{ ...inp, opacity: loadingBrands ? 0.5 : 1 }}
-          >
-            <option value="">{loadingBrands ? "Carregando..." : "Selecionar"}</option>
-            {brands.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label style={lbl}>Ano *</label>
-          <select name="year" required style={inp}>
-            <option value="">Ano</option>
-            {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </div>
+      {/* Marca */}
+      <div>
+        <label style={lbl}>Marca *</label>
+        <Combobox
+          items={brands}
+          value={selectedBrand}
+          onChange={setSelectedBrand}
+          placeholder={loadingBrands ? "Carregando..." : "Digite a marca"}
+          disabled={loadingBrands}
+        />
       </div>
 
       {/* Modelo */}
       <div>
         <label style={lbl}>Modelo *</label>
-        <select
-          required
+        <Combobox
+          items={models}
+          value={selectedModel}
+          onChange={setSelectedModel}
+          placeholder={!selectedBrand ? "Selecione a marca primeiro" : loadingModels ? "Carregando modelos..." : "Digite o modelo"}
           disabled={!selectedBrand || loadingModels}
-          value={selectedModel?.code ?? ""}
-          onChange={(e) => {
-            const m = models.find((m) => m.code === e.target.value) ?? null;
-            setSelectedModel(m);
-          }}
-          style={{ ...inp, opacity: !selectedBrand || loadingModels ? 0.5 : 1 }}
-        >
-          <option value="">
-            {!selectedBrand ? "Selecione a marca primeiro"
-              : loadingModels ? "Carregando modelos..."
-              : "Selecionar modelo"}
-          </option>
-          {models.map((m) => <option key={m.code} value={m.code}>{m.name}</option>)}
+        />
+      </div>
+
+      {/* Ano */}
+      <div>
+        <label style={lbl}>
+          Ano *
+          {loadingYears && <span style={{ fontWeight: 400, color: "var(--t4)", marginLeft: 6 }}>carregando...</span>}
+          {availableYears && !loadingYears && (
+            <span style={{ fontWeight: 400, color: "var(--t4)", marginLeft: 6 }}>{availableYears.length} anos disponíveis</span>
+          )}
+        </label>
+        <select name="year" required style={inp}>
+          <option value="">Selecionar ano</option>
+          {yearList.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>
 

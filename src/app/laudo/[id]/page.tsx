@@ -1,6 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const service = createServiceClient();
+  const { data: laudo } = await service
+    .from("laudos")
+    .select("brand, model, year, score, verdict")
+    .eq("id", id)
+    .single();
+
+  if (!laudo) return { title: "Laudo Pablo" };
+
+  const title = `${laudo.brand} ${laudo.model} ${laudo.year} — Score ${laudo.score?.toFixed(1)}/10`;
+  const description = `${laudo.verdict} · Laudo Pablo — avaliação independente de veículo usado.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+  };
+}
 
 const CAUTELAR_LABEL: Record<string, string> = {
   crlv: "CRLV vencido / irregular",

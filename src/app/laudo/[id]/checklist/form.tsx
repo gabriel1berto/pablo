@@ -33,6 +33,16 @@ const SEV: Record<string, { color: string; label: string }> = {
   warn: { color: "var(--warn)", label: "Atenção" },
 };
 
+const MECHANIC_KEYWORDS = [
+  "elevador", "desmontag", "oficina", "mecânico", "mecanic",
+  "técnico", "técnica", "perito", "escâner", "scanner", "diagnóstico", "diagnos",
+];
+
+function requiresMechanic(issue: Issue): boolean {
+  const text = [(issue.how_to_check ?? ""), (issue.if_bad ?? "")].join(" ").toLowerCase();
+  return MECHANIC_KEYWORDS.some((k) => text.includes(k));
+}
+
 export default function ChecklistForm({
   laudoId,
   issues,
@@ -101,6 +111,7 @@ export default function ChecklistForm({
             const state = getState(issue.id);
             const isOpen = openItems.has(issue.id);
             const hasTip = !!(issue.how_to_check || issue.if_bad);
+            const needsMechanic = requiresMechanic(issue);
 
             return (
               <div key={issue.id} style={{
@@ -131,6 +142,14 @@ export default function ChecklistForm({
                           color: sev.color,
                         }}>
                           {sev.label}
+                        </span>
+                      )}
+                      {needsMechanic && (
+                        <span
+                          title="Requer inspeção de mecânico"
+                          style={{ marginLeft: 6, fontSize: 11 }}
+                        >
+                          🔧
                         </span>
                       )}
                     </div>
@@ -209,6 +228,23 @@ export default function ChecklistForm({
           })}
         </div>
       ))}
+
+      {/* Promise card */}
+      <div style={{
+        background: "var(--bg2)", border: "1px solid var(--bd)",
+        borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 4,
+        display: "flex", alignItems: "flex-start", gap: 10,
+      }}>
+        <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>📸</span>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t2)", marginBottom: 2 }}>
+            Em breve: avaliação por fotos
+          </div>
+          <div style={{ fontSize: 11, color: "var(--t4)", lineHeight: 1.5 }}>
+            Envie fotos do carro e nossa IA identifica problemas automaticamente.
+          </div>
+        </div>
+      </div>
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>
         <div style={{ fontSize: 12, color: "var(--t3)", marginBottom: 14, textAlign: "center" }}>
