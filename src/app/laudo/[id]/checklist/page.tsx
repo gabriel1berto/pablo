@@ -29,7 +29,7 @@ export default async function ChecklistPage({
 
   const { data: issues } = await supabase
     .from("car_issues")
-    .select("id, category, title, description, severity")
+    .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
     .ilike("model_pattern", `%${modelKey}%`)
     .neq("category", "_sentinel")
     .lte("year_from", laudo.year)
@@ -39,27 +39,30 @@ export default async function ChecklistPage({
     .order("category")
     .order("sort_order");
 
-  // Verificar se já foi pesquisado (sentinel ou issues reais)
+  // Any row for this model (sentinel or real items)
   const { data: anyRow } = await supabase
     .from("car_issues")
     .select("id")
     .ilike("model_pattern", `%${modelKey}%`)
     .limit(1);
 
-  const alreadyResearched = anyRow && anyRow.length > 0;
-  const hasSpecific = issues && issues.length > 0;
+  const hasSpecific = (issues ?? []).length > 0;
+  const hasAnyRow = (anyRow ?? []).length > 0;
 
-  // Sem issues específicas E nunca pesquisado → mostrar loader de research
-  const needsResearch = !hasSpecific && !alreadyResearched;
+  // Sentinel-only = pesquisa foi tentada mas não retornou items para este modelo/ano/km
+  const sentinelOnly = !hasSpecific && hasAnyRow;
 
-  // Fallback para genérico se pesquisado mas sem resultados
+  // Loader apenas quando nunca pesquisado (sem items e sem sentinel)
+  const needsResearch = !hasSpecific && !sentinelOnly;
+
+  // Fallback para genérico se sentinel-only (pesquisa rodou mas sem resultados)
   let displayIssues = issues ?? [];
   let isGeneric = false;
 
-  if (!hasSpecific && alreadyResearched) {
+  if (!needsResearch && !hasSpecific) {
     const { data: generic } = await supabase
       .from("car_issues")
-      .select("id, category, title, description, severity")
+      .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
       .eq("model_pattern", "Generico")
       .order("category")
       .order("sort_order");
@@ -93,7 +96,7 @@ export default async function ChecklistPage({
       </div>
 
       <div style={{ paddingTop: 12 }}>
-        {/* Loading: pesquisando modelo novo */}
+        {/* Research loader — triggers re-research for new or stale models */}
         {needsResearch && (
           <ResearchLoader
             brand={laudo.brand}
@@ -123,7 +126,7 @@ export default async function ChecklistPage({
                 {isGeneric
                   ? "Modelo fora da base. Checklist padrão para qualquer carro usado."
                   : `Problemas reais documentados para ${laudo.km.toLocaleString("pt-BR")} km.`}
-                {" "}Marque <strong>OK</strong>, <strong>Problema</strong> ou <strong>N/V</strong> (não verificou).
+                {" "}Marque <strong>OK</strong> ou <strong>Problema</strong> em cada item.
               </div>
             </div>
             <ChecklistForm laudoId={id} issues={displayIssues} />

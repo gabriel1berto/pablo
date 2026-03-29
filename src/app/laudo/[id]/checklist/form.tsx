@@ -8,10 +8,14 @@ type Issue = {
   category: string;
   title: string;
   description: string;
-  severity: "critical" | "warn" | "ok";
+  severity: "critical" | "warn";
+  how_to_check: string | null;
+  why_important: string | null;
+  if_bad: string | null;
+  repair_cost: string | null;
 };
 
-type State = "nd" | "ok" | "problema";
+type State = "ok" | "problema";
 
 const CAT_LABEL: Record<string, string> = {
   motor: "Motor",
@@ -37,20 +41,37 @@ export default function ChecklistForm({
   issues: Issue[];
 }) {
   const [states, setStates] = useState<Record<number, State>>({});
+  const [openItems, setOpenItems] = useState<Set<number>>(() => {
+    const open = new Set<number>();
+    const seenCats = new Set<string>();
+    for (const issue of issues) {
+      if (!seenCats.has(issue.category)) {
+        open.add(issue.id);
+        seenCats.add(issue.category);
+      }
+    }
+    return open;
+  });
   const [loading, setLoading] = useState(false);
 
-  const getState = (id: number): State => states[id] ?? "nd";
+  const getState = (id: number): State | null => states[id] ?? null;
   const setState = (id: number, s: State) =>
     setStates((prev) => ({ ...prev, [id]: s }));
+  const toggleOpen = (id: number) =>
+    setOpenItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const grouped = issues.reduce<Record<string, Issue[]>>((acc, issue) => {
     (acc[issue.category] ??= []).push(issue);
     return acc;
   }, {});
 
-  const problemCount = issues.filter((i) => getState(i.id) === "problema").length;
-  const okCount = issues.filter((i) => getState(i.id) === "ok").length;
-  const answered = problemCount + okCount;
+  const answered = Object.keys(states).length;
+  const problemCount = Object.values(states).filter((s) => s === "problema").length;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -58,26 +79,10 @@ export default function ChecklistForm({
     const fd = new FormData();
     issues.forEach((issue) => {
       fd.append("item_id", String(issue.id));
-      fd.append(`item_state_${issue.id}`, getState(issue.id));
+      fd.append(`item_state_${issue.id}`, states[issue.id] ?? "nd");
     });
     await salvarChecklist(laudoId, fd);
   }
-
-  const btn = (id: number, s: State, label: string, activeColor: string): React.CSSProperties => {
-    const active = getState(id) === s;
-    return {
-      flex: 1,
-      height: 34,
-      fontSize: 12,
-      fontWeight: 700,
-      border: active ? "none" : "1px solid var(--bg4)",
-      borderRadius: 8,
-      cursor: "pointer",
-      background: active ? activeColor : "var(--bg3)",
-      color: active ? (s === "ok" ? "#050505" : "#fff") : "var(--t3)",
-      transition: "all .12s",
-    };
-  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -94,13 +99,22 @@ export default function ChecklistForm({
           {items.map((issue) => {
             const sev = SEV[issue.severity];
             const state = getState(issue.id);
+            const isOpen = openItems.has(issue.id);
+            const hasTip = !!(issue.how_to_check || issue.if_bad);
+
             return (
               <div key={issue.id} style={{
                 padding: "14px 0",
                 borderBottom: "1px solid rgba(255,255,255,0.04)",
               }}>
-                {/* Title row */}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                {/* Title row — click to expand tip */}
+                <div
+                  onClick={() => hasTip && toggleOpen(issue.id)}
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 10,
+                    marginBottom: 10, cursor: hasTip ? "pointer" : "default",
+                  }}
+                >
                   <div style={{
                     width: 6, height: 6, borderRadius: "50%",
                     background: sev?.color ?? "var(--t3)",
@@ -120,25 +134,74 @@ export default function ChecklistForm({
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 4, lineHeight: 1.5 }}>
-                      {issue.description}
-                    </div>
                   </div>
+                  {hasTip && (
+                    <span style={{
+                      fontSize: 14, color: "var(--t4)", flexShrink: 0, marginTop: 3,
+                      display: "inline-block",
+                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform .15s",
+                    }}>
+                      ▾
+                    </span>
+                  )}
                 </div>
 
-                {/* 3-state toggle */}
-                <div style={{ display: "flex", gap: 6, marginLeft: 16 }}>
-                  <button type="button" onClick={() => setState(issue.id, "ok")}
-                    style={btn(issue.id, "ok", "✓ OK", "var(--ok)")}>
+                {/* Inline tip dropdown */}
+                {isOpen && hasTip && (
+                  <div style={{
+                    marginLeft: 16, marginBottom: 10,
+                    background: "var(--bg3)", borderRadius: 8, padding: "10px 12px",
+                  }}>
+                    {issue.how_to_check && (
+                      <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: (issue.if_bad || issue.repair_cost) ? 6 : 0 }}>
+                        <span style={{ fontWeight: 700, color: "var(--t3)" }}>Como verificar: </span>
+                        {issue.how_to_check}
+                      </div>
+                    )}
+                    {issue.if_bad && (
+                      <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: issue.repair_cost ? 4 : 0 }}>
+                        <span style={{ fontWeight: 700, color: "var(--t3)" }}>Se problema: </span>
+                        {issue.if_bad}
+                      </div>
+                    )}
+                    {issue.repair_cost && (
+                      <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 4 }}>
+                        Reparo estimado: <strong style={{ color: "var(--t2)" }}>{issue.repair_cost}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* OK / Problema buttons */}
+                <div style={{ display: "flex", gap: 8, marginLeft: 16 }}>
+                  <button
+                    type="button"
+                    onClick={() => setState(issue.id, "ok")}
+                    style={{
+                      flex: 1, height: 36, fontSize: 13, fontWeight: 700,
+                      border: state === "ok" ? "none" : "1px solid var(--bg4)",
+                      borderRadius: 8, cursor: "pointer",
+                      background: state === "ok" ? "var(--ok)" : "var(--bg3)",
+                      color: state === "ok" ? "#050505" : "var(--t3)",
+                      transition: "all .12s",
+                    }}
+                  >
                     ✓ OK
                   </button>
-                  <button type="button" onClick={() => setState(issue.id, "problema")}
-                    style={btn(issue.id, "problema", "✗ Problema", "var(--danger)")}>
+                  <button
+                    type="button"
+                    onClick={() => setState(issue.id, "problema")}
+                    style={{
+                      flex: 1, height: 36, fontSize: 13, fontWeight: 700,
+                      border: state === "problema" ? "none" : "1px solid var(--bg4)",
+                      borderRadius: 8, cursor: "pointer",
+                      background: state === "problema" ? "var(--danger)" : "var(--bg3)",
+                      color: state === "problema" ? "#fff" : "var(--t3)",
+                      transition: "all .12s",
+                    }}
+                  >
                     ✗ Problema
-                  </button>
-                  <button type="button" onClick={() => setState(issue.id, "nd")}
-                    style={btn(issue.id, "nd", "? N/V", "var(--bg4)")}>
-                    ? N/V
                   </button>
                 </div>
               </div>
@@ -149,9 +212,11 @@ export default function ChecklistForm({
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>
         <div style={{ fontSize: 12, color: "var(--t3)", marginBottom: 14, textAlign: "center" }}>
-          {answered} de {issues.length} itens respondidos
+          {answered} de {issues.length} itens verificados
           {problemCount > 0 && (
-            <span style={{ color: "var(--danger)", marginLeft: 8 }}>· {problemCount} problema{problemCount > 1 ? "s" : ""}</span>
+            <span style={{ color: "var(--danger)", marginLeft: 8 }}>
+              · {problemCount} problema{problemCount > 1 ? "s" : ""}
+            </span>
           )}
         </div>
         <button

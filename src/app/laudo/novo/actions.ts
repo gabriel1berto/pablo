@@ -33,20 +33,29 @@ export async function criarLaudo(formData: FormData) {
     return { error: "Erro ao salvar. Tente novamente." };
   }
 
-  // Marca crédito como usado (se existir — primeiro laudo é gratuito)
-  const { data: credit } = await supabase
-    .from("laudo_credits")
-    .select("id")
-    .eq("user_id", user.id)
-    .is("used_at", null)
-    .limit(1)
-    .single();
+  // Conta free — não consome crédito
+  const { data: freeAccount } = await supabase
+    .from("free_accounts")
+    .select("email")
+    .eq("email", user.email ?? "")
+    .maybeSingle();
 
-  if (credit) {
-    await supabase
+  if (!freeAccount) {
+    // Marca crédito como usado (se existir — primeiro laudo é gratuito)
+    const { data: credit } = await supabase
       .from("laudo_credits")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", credit.id);
+      .select("id")
+      .eq("user_id", user.id)
+      .is("used_at", null)
+      .limit(1)
+      .single();
+
+    if (credit) {
+      await supabase
+        .from("laudo_credits")
+        .update({ used_at: new Date().toISOString() })
+        .eq("id", credit.id);
+    }
   }
 
   return { id: data.id };

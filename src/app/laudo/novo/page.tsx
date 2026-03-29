@@ -10,20 +10,29 @@ export default async function NovoLaudo() {
 
   if (!user) redirect("/cadastro");
 
-  // Primeiro laudo é gratuito; demais exigem crédito pago
-  const { count: laudoCount } = await supabase
-    .from("laudos")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
+  // Verificar se é conta free (acesso irrestrito)
+  const { data: freeAccount } = await supabase
+    .from("free_accounts")
+    .select("email")
+    .eq("email", user.email ?? "")
+    .maybeSingle();
 
-  if ((laudoCount ?? 0) >= 1) {
-    const { count: creditCount } = await supabase
-      .from("laudo_credits")
+  if (!freeAccount) {
+    // Primeiro laudo é gratuito; demais exigem crédito pago
+    const { count: laudoCount } = await supabase
+      .from("laudos")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .is("used_at", null);
+      .eq("user_id", user.id);
 
-    if ((creditCount ?? 0) === 0) redirect("/pagamento");
+    if ((laudoCount ?? 0) >= 1) {
+      const { count: creditCount } = await supabase
+        .from("laudo_credits")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .is("used_at", null);
+
+      if ((creditCount ?? 0) === 0) redirect("/pagamento");
+    }
   }
 
   return (

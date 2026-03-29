@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { normalizeModelKey } from "@/lib/model-utils";
 export { normalizeModelKey };
 
@@ -16,10 +16,10 @@ export async function researchModelIssues(
   year: number,
   km: number
 ): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const modelKey = normalizeModelKey(model);
 
-  // Already researched?
+  // Já pesquisado (sentinel ou items reais)? Não repetir.
   const { data: existing } = await supabase
     .from("car_issues")
     .select("id")
@@ -28,7 +28,7 @@ export async function researchModelIssues(
 
   if (existing && existing.length > 0) return;
 
-  // Grava sentinel antes de chamar a API — garante fallback para genérico mesmo se timeout
+  // Insert sentinel before API call — prevents infinite loader loop on timeout
   await supabase.from("car_issues").insert({
     brand,
     model_pattern: modelKey,
@@ -45,10 +45,13 @@ export async function researchModelIssues(
 
   const [km_from, km_to] = kmBucket(km);
   const kmLabel =
-    km < 30000 ? "até 30.000 km"
-    : km < 60000 ? "entre 30.000 e 60.000 km"
-    : km < 100000 ? "entre 60.000 e 100.000 km"
-    : "acima de 100.000 km";
+    km < 30000
+      ? "até 30.000 km"
+      : km < 60000
+      ? "entre 30.000 e 60.000 km"
+      : km < 100000
+      ? "entre 60.000 e 100.000 km"
+      : "acima de 100.000 km";
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -57,20 +60,24 @@ export async function researchModelIssues(
   try {
     const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [
         {
           role: "user",
-          content: `Você é um especialista em mecânica automotiva brasileira com 20 anos de experiência em oficinas e fóruns como o Autos Segredos e Clube do Carro.
+          content: `Você é um especialista em mecânica automotiva brasileira com 20 anos de experiência em oficinas e fóruns como Autos Segredos e Clube do Carro.
 
-Gere uma lista de problemas REAIS, conhecidos e documentados para: ${brand} ${model} ${year}, com ${kmLabel}.
+Gere EXATAMENTE 25 problemas REAIS, conhecidos e documentados para: ${brand} ${model} ${year}, com ${kmLabel}.
 
 Responda APENAS com JSON válido (sem texto extra, sem markdown), neste formato:
 [
   {
     "category": "motor",
     "title": "Título curto e direto (máx 55 chars)",
-    "description": "Como identificar o problema, o que causa, custo estimado de reparo em R$ se aplicável.",
+    "description": "Breve descrição do problema (1-2 frases)",
+    "how_to_check": "Como verificar na vistoria — ação concreta de 1 linha",
+    "why_important": "Por que este item é crítico (1 linha)",
+    "if_bad": "Consequência se houver problema (1 linha)",
+    "repair_cost": "R$ X.XXX–Y.YYY",
     "severity": "critical",
     "sort_order": 1
   }
@@ -78,7 +85,7 @@ Responda APENAS com JSON válido (sem texto extra, sem markdown), neste formato:
 
 Categorias válidas: motor, transmissao, suspensao, freios, pneus, carroceria, eletrica
 Severity: "critical" para segurança ou custo acima de R$ 800, "warn" para demais.
-Gere entre 6 e 14 itens. Foque em falhas reais documentadas para este modelo e faixa de km.`,
+Gere exatamente 25 itens cobrindo todas as categorias. Foque em falhas REAIS documentadas para este modelo e faixa de km.`,
         },
       ],
     });
@@ -89,12 +96,19 @@ Gere entre 6 e 14 itens. Foque em falhas reais documentadas para este modelo e f
       items = JSON.parse(raw);
     }
   } catch {
-    // Falha silenciosa — sentinel abaixo evita nova tentativa
+    // Falha silenciosa — sentinel evita nova tentativa
   }
 
-  const validCategories = ["motor", "transmissao", "suspensao", "freios", "pneus", "carroceria", "eletrica"];
+  const validCategories = [
+    "motor",
+    "transmissao",
+    "suspensao",
+    "freios",
+    "pneus",
+    "carroceria",
+    "eletrica",
+  ];
 
-  // Se Anthropic retornou resultados, insere os issues reais
   if (Array.isArray(items) && items.length > 0) {
     const rows = (items as Record<string, unknown>[]).map((item, idx) => ({
       brand,
@@ -103,9 +117,15 @@ Gere entre 6 e 14 itens. Foque em falhas reais documentadas para este modelo e f
       year_to: year + 3,
       km_from,
       km_to,
-      category: validCategories.includes(item.category as string) ? item.category : "motor",
+      category: validCategories.includes(item.category as string)
+        ? item.category
+        : "motor",
       title: String(item.title ?? "").slice(0, 100) || "Item sem título",
       description: String(item.description ?? ""),
+      how_to_check: item.how_to_check ? String(item.how_to_check) : null,
+      why_important: item.why_important ? String(item.why_important) : null,
+      if_bad: item.if_bad ? String(item.if_bad) : null,
+      repair_cost: item.repair_cost ? String(item.repair_cost) : null,
       severity: item.severity === "critical" ? "critical" : "warn",
       sort_order: Number(item.sort_order) || idx + 1,
     }));
