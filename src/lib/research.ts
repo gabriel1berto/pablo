@@ -60,37 +60,25 @@ export async function researchModelIssues(
   try {
     const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 8192,
+      max_tokens: 4096,
       messages: [
         {
           role: "user",
           content: `Você é um especialista em mecânica automotiva brasileira com 20 anos de experiência em oficinas e fóruns como Autos Segredos e Clube do Carro.
 
-Gere EXATAMENTE 25 problemas REAIS, conhecidos e documentados para: ${brand} ${model} ${year}, com ${kmLabel}.
+Gere EXATAMENTE 15 problemas REAIS e conhecidos para: ${brand} ${model} ${year}, com ${kmLabel}.
 
-Regras para cada campo:
-- "how_to_check": instrução prática para leigo — o que fazer fisicamente + o sinal concreto que distingue OK de Problema. Use termos técnicos com explicação entre parênteses quando necessário. Máx 2 frases.
-- "if_bad": consequência técnica explicada para leigo — use o nome correto da peça/sistema com explicação entre parênteses do que ela faz. Descreva o que acontece com o carro. Máx 2 frases.
-- "repair_cost": faixa realista para o Brasil em 2025, não muito ampla (ex: "R$ 800–1.500").
-- "severity": "critical" para risco de segurança ou custo acima de R$ 800, "warn" para demais.
+Regras:
+- "how_to_check": 1 frase — o que fazer + sinal concreto de OK vs Problema. Termos técnicos com explicação entre parênteses.
+- "if_bad": 1 frase — consequência técnica para o carro, com nome da peça e o que ela faz entre parênteses.
+- "repair_cost": faixa realista Brasil 2025 (ex: "R$ 800–1.500").
+- "severity": "critical" se risco de segurança ou custo acima de R$ 800, "warn" para demais.
 
-Responda APENAS com JSON válido (sem texto extra, sem markdown), neste formato:
-[
-  {
-    "category": "motor",
-    "title": "Título curto (máx 55 chars)",
-    "description": "Breve descrição do problema",
-    "how_to_check": "Como verificar e o sinal de OK vs Problema",
-    "why_important": "Por que é crítico",
-    "if_bad": "Consequência técnica explicada para leigo",
-    "repair_cost": "R$ X.XXX–Y.YYY",
-    "severity": "critical",
-    "sort_order": 1
-  }
-]
+Responda APENAS com JSON válido (sem texto extra, sem markdown):
+[{"category":"motor","title":"Título (máx 55 chars)","description":"1 frase","how_to_check":"...","why_important":"...","if_bad":"...","repair_cost":"R$ X–Y","severity":"critical","sort_order":1}]
 
 Categorias válidas: motor, transmissao, suspensao, freios, pneus, carroceria, eletrica
-Gere exatamente 25 itens cobrindo todas as categorias. Foque em falhas REAIS documentadas para este modelo e faixa de km.`,
+Gere exatamente 15 itens cobrindo as principais categorias. Foque em falhas REAIS documentadas para este modelo.`,
         },
       ],
     });
