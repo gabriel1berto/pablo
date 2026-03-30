@@ -68,23 +68,28 @@ export async function researchModelIssues(
 
 Gere EXATAMENTE 25 problemas REAIS, conhecidos e documentados para: ${brand} ${model} ${year}, com ${kmLabel}.
 
+Regras para cada campo:
+- "how_to_check": instrução prática para leigo — o que fazer fisicamente + o sinal concreto que distingue OK de Problema. Use termos técnicos com explicação entre parênteses quando necessário. Máx 2 frases.
+- "if_bad": consequência técnica explicada para leigo — use o nome correto da peça/sistema com explicação entre parênteses do que ela faz. Descreva o que acontece com o carro. Máx 2 frases.
+- "repair_cost": faixa realista para o Brasil em 2025, não muito ampla (ex: "R$ 800–1.500").
+- "severity": "critical" para risco de segurança ou custo acima de R$ 800, "warn" para demais.
+
 Responda APENAS com JSON válido (sem texto extra, sem markdown), neste formato:
 [
   {
     "category": "motor",
-    "title": "Título curto e direto (máx 55 chars)",
-    "description": "Breve descrição do problema (1-2 frases)",
-    "how_to_check": "Instrução de verificação para leigo: o que fazer + o sinal concreto que distingue OK de Problema. Use termos técnicos quando necessário, mas explique entre parênteses o que significa. Máx 2 frases.",
-    "why_important": "Por que este item é crítico (1 linha)",
-    "if_bad": "Consequência técnica do problema explicada para leigo: use o nome técnico correto da peça/sistema e explique entre parênteses o que ela faz. Descreva o que acontece com o carro, não o que o comprador deve fazer. Máx 2 frases.",
-    "repair_cost": "R$ X.XXX–Y.YYY (faixa realista para o Brasil em 2024, não muito ampla)",
+    "title": "Título curto (máx 55 chars)",
+    "description": "Breve descrição do problema",
+    "how_to_check": "Como verificar e o sinal de OK vs Problema",
+    "why_important": "Por que é crítico",
+    "if_bad": "Consequência técnica explicada para leigo",
+    "repair_cost": "R$ X.XXX–Y.YYY",
     "severity": "critical",
     "sort_order": 1
   }
 ]
 
 Categorias válidas: motor, transmissao, suspensao, freios, pneus, carroceria, eletrica
-Severity: "critical" para segurança ou custo acima de R$ 800, "warn" para demais.
 Gere exatamente 25 itens cobrindo todas as categorias. Foque em falhas REAIS documentadas para este modelo e faixa de km.`,
         },
       ],
