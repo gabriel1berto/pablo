@@ -102,6 +102,11 @@ Gere exatamente 25 itens cobrindo todas as categorias. Foque em falhas REAIS doc
     }
   } catch (err) {
     console.error("[research] Haiku error:", err);
+    // Salva o erro no sentinel para diagnóstico
+    await supabase.from("car_issues")
+      .update({ description: String(err) })
+      .eq("model_pattern", modelKey)
+      .eq("category", "_sentinel");
   }
 
   const validCategories = [
