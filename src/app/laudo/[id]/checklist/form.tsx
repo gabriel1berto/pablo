@@ -187,7 +187,7 @@ export default function ChecklistForm({
                     )}
                     {issue.if_bad && (
                       <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: issue.repair_cost ? 4 : 0 }}>
-                        <span style={{ fontWeight: 700, color: "var(--t3)" }}>Se problema: </span>
+                        <span style={{ fontWeight: 700, color: "var(--t3)" }}>Se tiver problema: </span>
                         {issue.if_bad}
                       </div>
                     )}

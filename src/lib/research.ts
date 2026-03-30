@@ -74,10 +74,10 @@ Responda APENAS com JSON válido (sem texto extra, sem markdown), neste formato:
     "category": "motor",
     "title": "Título curto e direto (máx 55 chars)",
     "description": "Breve descrição do problema (1-2 frases)",
-    "how_to_check": "Como verificar na vistoria — ação concreta de 1 linha",
+    "how_to_check": "Instrução de verificação para leigo: o que fazer + o sinal concreto que distingue OK de Problema. Use termos técnicos quando necessário, mas explique entre parênteses o que significa. Máx 2 frases.",
     "why_important": "Por que este item é crítico (1 linha)",
-    "if_bad": "Consequência se houver problema (1 linha)",
-    "repair_cost": "R$ X.XXX–Y.YYY",
+    "if_bad": "Consequência técnica do problema explicada para leigo: use o nome técnico correto da peça/sistema e explique entre parênteses o que ela faz. Descreva o que acontece com o carro, não o que o comprador deve fazer. Máx 2 frases.",
+    "repair_cost": "R$ X.XXX–Y.YYY (faixa realista para o Brasil em 2024, não muito ampla)",
     "severity": "critical",
     "sort_order": 1
   }
