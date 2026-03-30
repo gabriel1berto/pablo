@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
     }
     await researchModelIssues(brand, model, year, km);
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Falha na pesquisa" }, { status: 500 });
+  } catch (err) {
+    console.error("[research route] error:", err);
+    return NextResponse.json({ error: "Falha na pesquisa", detail: String(err) }, { status: 500 });
   }
 }

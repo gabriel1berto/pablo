@@ -100,8 +100,8 @@ Gere exatamente 25 itens cobrindo todas as categorias. Foque em falhas REAIS doc
       const raw = block.text.trim().replace(/^```json\n?|```$/g, "");
       items = JSON.parse(raw);
     }
-  } catch {
-    // Falha silenciosa — sentinel evita nova tentativa
+  } catch (err) {
+    console.error("[research] Haiku error:", err);
   }
 
   const validCategories = [
