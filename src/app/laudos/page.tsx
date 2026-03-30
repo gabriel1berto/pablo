@@ -9,6 +9,97 @@ const VERDICT_COLOR: Record<string, string> = {
   "Não Recomendado": "var(--danger)",
 };
 
+type Laudo = {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  km: number;
+  score: number | null;
+  verdict: string | null;
+  created_at: string;
+  tipo: string;
+};
+
+function LaudoCard({ laudo }: { laudo: Laudo }) {
+  const verdictColor = VERDICT_COLOR[laudo.verdict ?? ""] ?? "var(--t3)";
+  const date = new Date(laudo.created_at).toLocaleDateString("pt-BR");
+  const href = laudo.score ? `/laudo/${laudo.id}/resultado` : `/laudo/${laudo.id}/checklist`;
+
+  return (
+    <Link key={laudo.id} href={href} style={{ textDecoration: "none" }}>
+      <div style={{
+        background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)",
+        padding: "16px 18px", display: "flex", alignItems: "center", gap: 14,
+      }}>
+        {/* Score */}
+        <div style={{
+          minWidth: 52, height: 52, borderRadius: 12, background: "var(--bg3)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          {laudo.score ? (
+            <>
+              <span style={{ fontSize: 18, fontWeight: 900, color: verdictColor, lineHeight: 1 }}>
+                {laudo.score.toFixed(1)}
+              </span>
+              <span style={{ fontSize: 9, color: "var(--t4)", marginTop: 2 }}>/10</span>
+            </>
+          ) : (
+            <span style={{ fontSize: 10, color: "var(--t4)", fontWeight: 700, textAlign: "center", lineHeight: 1.3 }}>
+              em<br />andamento
+            </span>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "var(--t1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {laudo.brand} {laudo.model} {laudo.year}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 3 }}>
+            {laudo.km.toLocaleString("pt-BR")} km · {date}
+          </div>
+          {laudo.verdict && (
+            <div style={{ fontSize: 11, fontWeight: 700, color: verdictColor, marginTop: 4 }}>
+              {laudo.verdict}
+            </div>
+          )}
+        </div>
+
+        <span style={{ color: "var(--t4)", fontSize: 18, flexShrink: 0 }}>›</span>
+      </div>
+    </Link>
+  );
+}
+
+function Section({
+  title,
+  subtitle,
+  laudos,
+  accent,
+}: {
+  title: string;
+  subtitle: string;
+  laudos: Laudo[];
+  accent?: string;
+}) {
+  if (laudos.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 800, color: accent ?? "var(--t2)", letterSpacing: "0.3px" }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 2 }}>{subtitle}</div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {laudos.map((l) => <LaudoCard key={l.id} laudo={l} />)}
+      </div>
+    </div>
+  );
+}
+
 export default async function MeusLaudosPage() {
   const supabase = await createClient();
 
@@ -17,9 +108,12 @@ export default async function MeusLaudosPage() {
 
   const { data: laudos } = await supabase
     .from("laudos")
-    .select("id, brand, model, year, km, score, verdict, created_at")
+    .select("id, brand, model, year, km, score, verdict, created_at, tipo")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  const compradores = (laudos ?? []).filter((l) => l.tipo !== "vendedor");
+  const vendedores = (laudos ?? []).filter((l) => l.tipo === "vendedor");
 
   return (
     <main style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", padding: "0 24px 64px" }}>
@@ -35,7 +129,7 @@ export default async function MeusLaudosPage() {
             Meus laudos
           </h1>
           <p style={{ fontSize: 13, color: "var(--t3)" }}>
-            {laudos?.length ?? 0} laudo{laudos?.length !== 1 ? "s" : ""} gerado{laudos?.length !== 1 ? "s" : ""}
+            {laudos?.length ?? 0} laudo{laudos?.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
@@ -75,64 +169,21 @@ export default async function MeusLaudosPage() {
         </div>
       )}
 
-      {/* Laudo list */}
       {laudos && laudos.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {laudos.map((laudo) => {
-            const verdictColor = VERDICT_COLOR[laudo.verdict] ?? "var(--t3)";
-            const date = new Date(laudo.created_at).toLocaleDateString("pt-BR");
-            return (
-              <Link
-                key={laudo.id}
-                href={laudo.score ? `/laudo/${laudo.id}/resultado` : `/laudo/${laudo.id}/checklist`}
-                style={{ textDecoration: "none" }}
-              >
-                <div style={{
-                  background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)",
-                  padding: "16px 18px", display: "flex", alignItems: "center", gap: 14,
-                }}>
-                  {/* Score */}
-                  <div style={{
-                    minWidth: 52, height: 52, borderRadius: 12, background: "var(--bg3)",
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0,
-                  }}>
-                    {laudo.score ? (
-                      <>
-                        <span style={{ fontSize: 18, fontWeight: 900, color: verdictColor, lineHeight: 1 }}>
-                          {laudo.score.toFixed(1)}
-                        </span>
-                        <span style={{ fontSize: 9, color: "var(--t4)", marginTop: 2 }}>/10</span>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 10, color: "var(--t4)", fontWeight: 700, textAlign: "center", lineHeight: 1.3 }}>
-                        em<br />andamento
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: "var(--t1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {laudo.brand} {laudo.model} {laudo.year}
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 3 }}>
-                      {laudo.km.toLocaleString("pt-BR")} km · {date}
-                    </div>
-                    {laudo.verdict && (
-                      <div style={{ fontSize: 11, fontWeight: 700, color: verdictColor, marginTop: 4 }}>
-                        {laudo.verdict}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Arrow */}
-                  <span style={{ color: "var(--t4)", fontSize: 18, flexShrink: 0 }}>›</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <>
+          <Section
+            title="Laudos de compra"
+            subtitle="Avaliações de carros que você pesquisou"
+            laudos={compradores}
+            accent="var(--accent)"
+          />
+          <Section
+            title="Laudos de venda"
+            subtitle="Declarações do seu próprio carro"
+            laudos={vendedores}
+            accent="#A78BFA"
+          />
+        </>
       )}
     </main>
   );

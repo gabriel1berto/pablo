@@ -35,7 +35,6 @@ export default async function ChecklistPage({
     .lte("year_from", laudo.year)
     .gte("year_to", laudo.year)
     .lte("km_from", laudo.km)
-    .gte("km_to", laudo.km)
     .order("category")
     .order("sort_order");
 
