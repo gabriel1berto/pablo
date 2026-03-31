@@ -13,116 +13,134 @@ export default function LP() {
       }}
     >
       {/* Logo */}
-      <div style={{ paddingTop: 56 }}>
+      <div style={{ paddingTop: 52 }}>
         <span style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.8px" }}>
           pa<span style={{ color: "var(--accent)" }}>b</span>lo
         </span>
       </div>
 
       {/* Hero */}
-      <div style={{ paddingTop: 48, flex: 1 }}>
-        <div
-          style={{
-            display: "inline-flex",
-            background: "var(--ag)",
-            border: "1px solid rgba(0,212,170,0.2)",
-            borderRadius: "var(--rf)",
-            padding: "5px 12px",
-            marginBottom: 22,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--accent)",
-              letterSpacing: "0.5px",
-              textTransform: "uppercase",
-            }}
-          >
-            Laudo grátis
-          </span>
-        </div>
-
+      <div style={{ paddingTop: 40, flex: 1 }}>
         <h1
           style={{
-            fontSize: 32,
+            fontSize: 34,
             fontWeight: 900,
             letterSpacing: "-1px",
             lineHeight: 1.1,
-            marginBottom: 16,
+            marginBottom: 14,
           }}
         >
-          Antes de comprar,{" "}
-          <span style={{ color: "var(--accent)" }}>saiba tudo</span>
+          Laudo de carro{" "}
+          <span style={{ color: "var(--accent)" }}>grátis</span>
           <br />
-          sobre o carro.
+          em 8 minutos.
         </h1>
 
-        <p style={{ fontSize: 16, color: "var(--t2)", lineHeight: 1.65, marginBottom: 32 }}>
-          Em 8 minutos você tem um laudo completo com checklist técnico,
-          análise de documentação e posição de preço.
+        <p style={{ fontSize: 15, color: "var(--t2)", lineHeight: 1.65, marginBottom: 32 }}>
+          Checklist técnico, documentação e preço vs. FIPE —
+          tudo antes de fechar negócio.
         </p>
 
-        {/* Value props */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+        {/* Accordions */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
+
           {/* Buyer */}
-          <div style={{
-            background: "var(--bg2)", border: "1px solid var(--bd)",
-            borderRadius: "var(--rm)", padding: "16px 18px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <span style={{
-                fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
-                background: "var(--ag)", color: "var(--accent)", letterSpacing: "0.5px",
-                textTransform: "uppercase",
-              }}>
-                Para quem compra
-              </span>
+          <details style={{ background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)", overflow: "hidden" }} open>
+            <summary style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 16px", cursor: "pointer", listStyle: "none",
+              userSelect: "none",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
+                  background: "var(--ag)", color: "var(--accent)",
+                  letterSpacing: "0.5px", textTransform: "uppercase", flexShrink: 0,
+                }}>
+                  Comprando
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>
+                  Descobrir o que o vendedor esconde
+                </span>
+              </div>
+              <span style={{ fontSize: 16, color: "var(--t4)", flexShrink: 0, marginLeft: 8 }}>▾</span>
+            </summary>
+            <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--bd)" }}>
+              <p style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.6, margin: "12px 0 14px" }}>
+                Checklist de 15+ pontos técnicos por modelo, alertas documentais e posição de preço vs. FIPE.
+                Resultado claro: <strong style={{ color: "var(--ok)" }}>Boa Compra</strong>,{" "}
+                <strong style={{ color: "var(--warn)" }}>Cautela</strong> ou{" "}
+                <strong style={{ color: "var(--danger)" }}>Não Recomendado</strong>.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Link
+                  href="/cadastro"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    height: 44, background: "var(--accent)", color: "#050505",
+                    borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800,
+                    textDecoration: "none",
+                  }}
+                >
+                  Avaliar carro que vou comprar →
+                </Link>
+                <Link
+                  href="/laudo/ba45f916/resultado"
+                  style={{ fontSize: 12, color: "var(--t3)", textAlign: "center", textDecoration: "none" }}
+                >
+                  Ver exemplo: Onix 2017 · Score 8.8 · Boa Compra
+                </Link>
+              </div>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 4 }}>
-              Descubra o que o vendedor não conta
-            </div>
-            <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: 10 }}>
-              Checklist de 15+ pontos técnicos, alertas documentais, posição de preço vs. FIPE
-              e recomendação clara — Boa Compra, Cautela ou Não Recomendado.
-            </div>
-            <Link
-              href="/laudo/ba45f916/resultado"
-              style={{ fontSize: 12, color: "var(--accent)", fontWeight: 600, textDecoration: "none" }}
-            >
-              Ver exemplo: Onix 2017 — Score 8.8 Boa Compra →
-            </Link>
-          </div>
+          </details>
 
           {/* Seller */}
-          <div style={{
-            background: "var(--bg2)", border: "1px solid var(--bd)",
-            borderRadius: "var(--rm)", padding: "16px 18px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <span style={{
-                fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
-                background: "rgba(167,139,250,0.1)", color: "#A78BFA", letterSpacing: "0.5px",
-                textTransform: "uppercase",
-              }}>
-                Para quem vende
-              </span>
+          <details style={{ background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)", overflow: "hidden" }}>
+            <summary style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 16px", cursor: "pointer", listStyle: "none",
+              userSelect: "none",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
+                  background: "rgba(167,139,250,0.12)", color: "#A78BFA",
+                  letterSpacing: "0.5px", textTransform: "uppercase", flexShrink: 0,
+                }}>
+                  Vendendo
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>
+                  Vender mais rápido com transparência
+                </span>
+              </div>
+              <span style={{ fontSize: 16, color: "var(--t4)", flexShrink: 0, marginLeft: 8 }}>▾</span>
+            </summary>
+            <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--bd)" }}>
+              <p style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.6, margin: "12px 0 14px" }}>
+                Gere um laudo de transparência do seu carro e cole o link no anúncio.
+                Compradores confiam mais, negociam menos e fecham mais rápido.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Link
+                  href="/cadastro"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    height: 44, background: "#A78BFA", color: "#050505",
+                    borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800,
+                    textDecoration: "none",
+                  }}
+                >
+                  Gerar laudo do meu carro →
+                </Link>
+                <Link
+                  href="/laudo/8188fbf4/resultado"
+                  style={{ fontSize: 12, color: "var(--t3)", textAlign: "center", textDecoration: "none" }}
+                >
+                  Ver exemplo: Onix 2017 · Laudo de transparência
+                </Link>
+              </div>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 4 }}>
-              Venda mais rápido com transparência
-            </div>
-            <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: 10 }}>
-              Gere um laudo de transparência do seu carro e compartilhe no anúncio.
-              Compradores confiam mais, barganha menos e fecham mais rápido.
-            </div>
-            <Link
-              href="/laudo/8188fbf4/resultado"
-              style={{ fontSize: 12, color: "#A78BFA", fontWeight: 600, textDecoration: "none" }}
-            >
-              Ver exemplo: Onix 2017 — Laudo de transparência →
-            </Link>
-          </div>
+          </details>
         </div>
 
         {/* Stats */}
@@ -130,8 +148,7 @@ export default function LP() {
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 10,
-            marginBottom: 8,
+            gap: 8,
           }}
         >
           {[
@@ -144,31 +161,15 @@ export default function LP() {
               style={{
                 background: "var(--bg2)",
                 border: "1px solid var(--bd)",
-                borderRadius: 16,
-                padding: "16px 10px",
+                borderRadius: 14,
+                padding: "14px 8px",
                 textAlign: "center",
               }}
             >
-              <div
-                style={{
-                  fontSize: 19,
-                  fontWeight: 900,
-                  color: "var(--accent)",
-                  letterSpacing: "-0.5px",
-                }}
-              >
+              <div style={{ fontSize: 18, fontWeight: 900, color: "var(--accent)", letterSpacing: "-0.5px" }}>
                 {s.n}
               </div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "var(--t3)",
-                  fontWeight: 600,
-                  marginTop: 5,
-                  lineHeight: 1.4,
-                  whiteSpace: "pre-line",
-                }}
-              >
+              <div style={{ fontSize: 10, color: "var(--t3)", fontWeight: 600, marginTop: 4, lineHeight: 1.4, whiteSpace: "pre-line" }}>
                 {s.l}
               </div>
             </div>
@@ -176,7 +177,7 @@ export default function LP() {
         </div>
       </div>
 
-      {/* CTA */}
+      {/* Bottom CTA */}
       <div style={{ padding: "24px 0 48px" }}>
         <Link
           href="/cadastro"

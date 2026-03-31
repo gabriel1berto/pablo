@@ -32,9 +32,6 @@ export default async function ChecklistPage({
     .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
     .ilike("model_pattern", `%${modelKey}%`)
     .neq("category", "_sentinel")
-    .lte("year_from", laudo.year)
-    .gte("year_to", laudo.year)
-    .lte("km_from", laudo.km)
     .order("category")
     .order("sort_order");
 
