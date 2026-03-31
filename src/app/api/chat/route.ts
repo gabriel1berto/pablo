@@ -41,7 +41,6 @@ export async function POST(req: Request) {
 
   if (!laudo) return new Response("Laudo not found", { status: 404 });
 
-  // Build checklist context from live state (sent by client)
   let checklistContext = "";
   if (checklistState?.length) {
     const problems = checklistState.filter((i) => i.state === "problema");
@@ -75,39 +74,52 @@ Regras:
 - Se o checklist mostra problemas, considere na resposta.
 - Sem formalidades, sem "olá", sem "espero ter ajudado". Vai direto.`;
 
-  const stream = await client.messages.stream({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 512,
-    system: systemPrompt,
-    messages: messages.map((m) => ({
-      role: m.role,
-      content: m.content as any,
-    })),
-  });
+  try {
+    const stream = await client.messages.stream({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 512,
+      system: systemPrompt,
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: m.content as any,
+      })),
+    });
 
-  const encoder = new TextEncoder();
-  const readable = new ReadableStream({
-    async start(controller) {
-      for await (const event of stream) {
-        if (
-          event.type === "content_block_delta" &&
-          event.delta.type === "text_delta"
-        ) {
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
+              );
+            }
+          }
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        } catch (err) {
+          console.error("[chat] stream error:", err);
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
+            encoder.encode(`data: ${JSON.stringify({ error: "Erro na resposta. Tente novamente." })}\n\n`)
           );
+        } finally {
+          controller.close();
         }
-      }
-      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-      controller.close();
-    },
-  });
+      },
+    });
 
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  } catch (err) {
+    console.error("[chat] API error:", err);
+    return new Response("AI error", { status: 502 });
+  }
 }

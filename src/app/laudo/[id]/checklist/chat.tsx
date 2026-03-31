@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 type ChecklistState = {
   id: number;
@@ -59,17 +59,24 @@ export default function Chat({
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, streaming]);
+  }, []);
+
+  useEffect(() => { scrollToBottom(); }, [messages, streaming, scrollToBottom]);
 
   useEffect(() => {
-    if (open && inputRef.current) {
-      inputRef.current.focus();
+    if (open) {
+      document.body.style.overflow = "hidden";
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      document.body.style.overflow = "";
     }
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -117,6 +124,12 @@ export default function Chat({
       return { role: m.role as "user" | "assistant", content: m.content };
     });
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Timeout: 30s max per request
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -126,10 +139,13 @@ export default function Chat({
           messages: apiMessages,
           checklistState: checklistState.filter((i) => i.state !== null),
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeout);
+
       if (!res.ok) {
-        setMessages((prev) => [...prev, { role: "assistant", content: "Erro ao conectar. Tente novamente." }]);
+        setMessages((prev) => [...prev, { role: "assistant", content: "Erro ao conectar. Tente de novo." }]);
         setStreaming(false);
         return;
       }
@@ -141,31 +157,60 @@ export default function Chat({
       let assistantText = "";
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split("\n")) {
-          if (!line.startsWith("data: ")) continue;
-          const data = line.slice(6);
-          if (data === "[DONE]") break;
-          try {
-            const { text: t } = JSON.parse(data);
-            if (t) {
-              assistantText += t;
-              setMessages((prev) => {
-                const copy = [...prev];
-                copy[copy.length - 1] = { role: "assistant", content: assistantText };
-                return copy;
-              });
-            }
-          } catch {}
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          for (const line of chunk.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.error) {
+                assistantText = parsed.error;
+                setMessages((prev) => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { role: "assistant", content: assistantText };
+                  return copy;
+                });
+                break;
+              }
+              if (parsed.text) {
+                assistantText += parsed.text;
+                setMessages((prev) => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { role: "assistant", content: assistantText };
+                  return copy;
+                });
+              }
+            } catch {}
+          }
         }
+      } finally {
+        reader.releaseLock();
       }
-    } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Erro de conexão. Tente novamente." }]);
+
+      // If no response text came through
+      if (!assistantText) {
+        setMessages((prev) => {
+          const copy = [...prev];
+          copy[copy.length - 1] = { role: "assistant", content: "Sem resposta. Tente de novo." };
+          return copy;
+        });
+      }
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        setMessages((prev) => [...prev, { role: "assistant", content: "Timeout — tente uma pergunta mais curta." }]);
+      } else {
+        setMessages((prev) => [...prev, { role: "assistant", content: "Erro de conexão. Tente de novo." }]);
+      }
+    } finally {
+      clearTimeout(timeout);
+      abortRef.current = null;
+      setStreaming(false);
     }
-    setStreaming(false);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -178,6 +223,7 @@ export default function Chat({
   const answered = checklistState.filter((i) => i.state !== null);
   const problems = answered.filter((i) => i.state === "problema");
 
+  // Closed state — trigger button
   if (!open) {
     return (
       <button
@@ -195,9 +241,7 @@ export default function Chat({
           background: "var(--ag)", color: "var(--accent)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 15, fontWeight: 900, flexShrink: 0,
-        }}>
-          AI
-        </div>
+        }}>AI</div>
         <div style={{ textAlign: "left" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>
             Dúvida? Pergunte ao Pablo
@@ -206,55 +250,93 @@ export default function Chat({
             Tire fotos e receba análise instantânea
           </div>
         </div>
+        {messages.length > 0 && (
+          <span style={{
+            marginLeft: "auto", fontSize: 10, fontWeight: 700,
+            background: "var(--accent)", color: "#050505",
+            borderRadius: 99, padding: "2px 8px",
+          }}>{messages.length}</span>
+        )}
       </button>
     );
   }
 
+  // Open state — fullscreen overlay
   return (
     <div style={{
-      border: "1px solid var(--bd)", borderRadius: "var(--rm)",
-      overflow: "hidden", background: "var(--bg1)",
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "var(--bg0)",
+      display: "flex", flexDirection: "column",
     }}>
       {/* Header */}
-      <div
-        onClick={() => setOpen(false)}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 16px", background: "var(--bg2)",
-          borderBottom: "1px solid var(--bd)", cursor: "pointer",
-        }}
-      >
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 16px",
+        paddingTop: "max(12px, env(safe-area-inset-top))",
+        background: "var(--bg1)", borderBottom: "1px solid var(--bd)",
+        flexShrink: 0,
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
-            width: 24, height: 24, borderRadius: "50%",
+            width: 28, height: 28, borderRadius: "50%",
             background: "var(--ag)", color: "var(--accent)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 10, fontWeight: 900,
+            fontSize: 11, fontWeight: 900,
           }}>AI</div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Pablo</span>
-          {answered.length > 0 && (
-            <span style={{ fontSize: 10, color: "var(--t4)" }}>
-              vendo {answered.length} itens{problems.length > 0 ? ` · ${problems.length} problema${problems.length > 1 ? "s" : ""}` : ""}
-            </span>
-          )}
+          <div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>Pablo</span>
+            {answered.length > 0 && (
+              <div style={{ fontSize: 10, color: "var(--t4)", marginTop: 1 }}>
+                {answered.length} itens respondidos{problems.length > 0 ? ` · ${problems.length} problema${problems.length > 1 ? "s" : ""}` : ""}
+              </div>
+            )}
+          </div>
         </div>
-        <span style={{ fontSize: 18, color: "var(--t4)" }}>-</span>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          style={{
+            width: 32, height: 32, borderRadius: "50%",
+            background: "var(--bg2)", border: "1px solid var(--bd)",
+            color: "var(--t2)", fontSize: 18, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
 
       {/* Messages */}
       <div
         ref={scrollRef}
         style={{
-          height: 320, overflowY: "auto", padding: "12px 14px",
-          display: "flex", flexDirection: "column", gap: 10,
+          flex: 1, overflowY: "auto", padding: "16px 16px",
+          display: "flex", flexDirection: "column", gap: 12,
         }}
       >
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", padding: "32px 10px" }}>
-            <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.6, marginBottom: 16 }}>
-              Pergunte sobre o carro ou tire uma foto para análise.
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "20px 10px", gap: 20,
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: "50%",
+              background: "var(--ag)", color: "var(--accent)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, fontWeight: 900,
+            }}>AI</div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--t1)", marginBottom: 6 }}>
+                Fala, como posso ajudar?
+              </div>
+              <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5 }}>
+                Pergunta sobre o carro ou manda uma foto.
+              </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 300 }}>
               {[
                 "O preço tá justo?",
                 "Esse desgaste é grave?",
@@ -265,9 +347,10 @@ export default function Chat({
                   type="button"
                   onClick={() => { setInput(q); inputRef.current?.focus(); }}
                   style={{
-                    fontSize: 11, fontWeight: 600, color: "var(--accent)",
-                    background: "var(--ag)", border: "1px solid rgba(0,212,170,0.2)",
-                    borderRadius: 99, padding: "5px 12px", cursor: "pointer",
+                    fontSize: 13, fontWeight: 600, color: "var(--t1)",
+                    background: "var(--bg2)", border: "1px solid var(--bd)",
+                    borderRadius: 12, padding: "12px 16px", cursor: "pointer",
+                    textAlign: "left",
                   }}
                 >{q}</button>
               ))}
@@ -278,28 +361,29 @@ export default function Chat({
         {messages.map((msg, i) => (
           <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
             <div style={{
-              maxWidth: "85%",
-              background: msg.role === "user" ? "var(--accent)" : "var(--bg3)",
+              maxWidth: "82%",
+              background: msg.role === "user" ? "var(--accent)" : "var(--bg2)",
               color: msg.role === "user" ? "#050505" : "var(--t1)",
-              borderRadius: 14,
-              borderBottomRightRadius: msg.role === "user" ? 4 : 14,
-              borderBottomLeftRadius: msg.role === "assistant" ? 4 : 14,
-              padding: "10px 14px",
+              borderRadius: 16,
+              borderBottomRightRadius: msg.role === "user" ? 4 : 16,
+              borderBottomLeftRadius: msg.role === "assistant" ? 4 : 16,
+              padding: "12px 16px",
             }}>
               {msg.images?.map((img, j) => (
                 <img key={j} src={img} alt="" style={{
-                  width: "100%", maxWidth: 200, borderRadius: 8,
-                  marginBottom: msg.content ? 8 : 0, display: "block",
+                  width: "100%", maxWidth: 240, borderRadius: 10,
+                  marginBottom: msg.content ? 10 : 0, display: "block",
                 }} />
               ))}
               {msg.content && (
-                <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                <div style={{ fontSize: 14, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                   {msg.content}
                   {msg.role === "assistant" && streaming && i === messages.length - 1 && (
                     <span style={{
-                      display: "inline-block", width: 5, height: 14,
+                      display: "inline-block", width: 6, height: 16,
                       background: "var(--accent)", marginLeft: 2,
                       animation: "blink 1s infinite", verticalAlign: "text-bottom",
+                      borderRadius: 1,
                     }} />
                   )}
                 </div>
@@ -311,15 +395,18 @@ export default function Chat({
 
       {/* Image previews */}
       {images.length > 0 && (
-        <div style={{ display: "flex", gap: 8, padding: "8px 14px 0", overflowX: "auto" }}>
+        <div style={{
+          display: "flex", gap: 8, padding: "8px 16px",
+          overflowX: "auto", flexShrink: 0, background: "var(--bg0)",
+        }}>
           {images.map((img, i) => (
             <div key={i} style={{ position: "relative", flexShrink: 0 }}>
-              <img src={img} alt="" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover" }} />
+              <img src={img} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover" }} />
               <button type="button" onClick={() => removeImage(i)} style={{
-                position: "absolute", top: -6, right: -6, width: 18, height: 18,
+                position: "absolute", top: -6, right: -6, width: 20, height: 20,
                 borderRadius: "50%", background: "var(--danger)", color: "#fff",
-                border: "none", fontSize: 10, fontWeight: 900, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "2px solid var(--bg0)", fontSize: 10, fontWeight: 900,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
               }}>x</button>
             </div>
           ))}
@@ -328,32 +415,31 @@ export default function Chat({
 
       {/* Input area */}
       <div style={{
-        display: "flex", alignItems: "flex-end", gap: 6,
-        padding: "10px 12px 12px",
+        display: "flex", alignItems: "flex-end", gap: 8,
+        padding: "10px 12px",
+        paddingBottom: "max(12px, env(safe-area-inset-bottom))",
         borderTop: "1px solid var(--bd)",
+        background: "var(--bg1)", flexShrink: 0,
       }}>
-        {/* Hidden file inputs */}
         <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFile} style={{ display: "none" }} />
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display: "none" }} />
 
-        {/* Camera button */}
         <button type="button" onClick={() => cameraRef.current?.click()} style={{
-          width: 36, height: 36, borderRadius: "50%",
-          background: "var(--bg3)", border: "1px solid var(--bd)",
-          color: "var(--t2)", fontSize: 16, cursor: "pointer", flexShrink: 0,
+          width: 40, height: 40, borderRadius: "50%",
+          background: "var(--bg2)", border: "1px solid var(--bd)",
+          color: "var(--t2)", cursor: "pointer", flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
         </button>
 
-        {/* Gallery button */}
         <button type="button" onClick={() => fileRef.current?.click()} style={{
-          width: 36, height: 36, borderRadius: "50%",
-          background: "var(--bg3)", border: "1px solid var(--bd)",
-          color: "var(--t3)", fontSize: 16, cursor: "pointer", flexShrink: 0,
+          width: 40, height: 40, borderRadius: "50%",
+          background: "var(--bg2)", border: "1px solid var(--bd)",
+          color: "var(--t3)", fontSize: 20, cursor: "pointer", flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>+</button>
 
@@ -366,11 +452,11 @@ export default function Chat({
           rows={1}
           style={{
             flex: 1, resize: "none",
-            background: "var(--bg3)", border: "1px solid var(--bd)",
-            borderRadius: 18, padding: "8px 14px",
-            fontSize: 13, color: "var(--t1)",
+            background: "var(--bg2)", border: "1px solid var(--bd)",
+            borderRadius: 20, padding: "10px 16px",
+            fontSize: 14, color: "var(--t1)",
             outline: "none", lineHeight: 1.4,
-            maxHeight: 80, overflow: "auto",
+            maxHeight: 100, overflow: "auto",
           }}
         />
         <button
@@ -378,10 +464,10 @@ export default function Chat({
           onClick={send}
           disabled={streaming || (!input.trim() && !images.length)}
           style={{
-            width: 36, height: 36, borderRadius: "50%",
-            background: streaming || (!input.trim() && !images.length) ? "var(--bg3)" : "var(--accent)",
+            width: 40, height: 40, borderRadius: "50%",
+            background: streaming || (!input.trim() && !images.length) ? "var(--bg2)" : "var(--accent)",
             color: streaming || (!input.trim() && !images.length) ? "var(--t4)" : "#050505",
-            border: "none", fontSize: 16, fontWeight: 900,
+            border: "none", fontSize: 18, fontWeight: 900,
             cursor: streaming ? "not-allowed" : "pointer", flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
