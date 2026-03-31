@@ -70,8 +70,8 @@ export default function CompartilhaPage() {
     const isVendedor = laudo?.tipo === "vendedor";
     const text = laudo
       ? isVendedor
-        ? `Vistoriei meu ${laudo.brand} ${laudo.model} ${laudo.year} com o Pablo.\nScore: ${laudo.score}/10 · ${laudo.verdict}\nConfira o laudo completo: ${link}`
-        : `Laudo Pablo — ${laudo.brand} ${laudo.model} ${laudo.year}\nScore: ${laudo.score}/10 · ${laudo.verdict}\n${link}`
+        ? `Tenho um laudo do meu ${laudo.brand} ${laudo.model} ${laudo.year} feito pelo Pablo.\n\nScore: ${laudo.score?.toFixed(1)}/10 · ${laudo.verdict}\n\nVeja todos os detalhes antes de decidir: ${link}`
+        : `Fiz um laudo do ${laudo.brand} ${laudo.model} ${laudo.year} que você está vendendo.\n\nScore: ${laudo.score?.toFixed(1)}/10 · ${laudo.verdict}\n\nVeja os detalhes: ${link}`
       : link;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
   }
@@ -131,16 +131,6 @@ export default function CompartilhaPage() {
       {/* Actions */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
         <button
-          onClick={() => window.print()}
-          style={{
-            display: "flex", alignItems: "center", gap: 12, width: "100%", height: 52,
-            background: "var(--accent)", color: "#050505", border: "none",
-            borderRadius: "var(--rs)", fontSize: 14, fontWeight: 700, cursor: "pointer", padding: "0 18px",
-          }}
-        >
-          <span style={{ fontSize: 18 }}>🖨</span> Imprimir / Salvar PDF
-        </button>
-        <button
           onClick={whatsapp}
           style={{
             display: "flex", alignItems: "center", gap: 12, width: "100%", height: 52,
@@ -150,6 +140,19 @@ export default function CompartilhaPage() {
         >
           <span style={{ fontSize: 18 }}>💬</span> Compartilhar no WhatsApp
         </button>
+        <a
+          href={`/laudo/${id}/stories-image`}
+          download={`laudo-${id}-stories.png`}
+          style={{
+            display: "flex", alignItems: "center", gap: 12, width: "100%", height: 52,
+            background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+            color: "#fff", border: "none",
+            borderRadius: "var(--rs)", fontSize: 14, fontWeight: 700, cursor: "pointer", padding: "0 18px",
+            textDecoration: "none",
+          }}
+        >
+          <span style={{ fontSize: 18 }}>📸</span> Baixar imagem para Stories
+        </a>
         <button
           onClick={copyLink}
           style={{
@@ -160,6 +163,16 @@ export default function CompartilhaPage() {
         >
           <span style={{ fontSize: 18 }}>🔗</span>{" "}
           {copied ? "Link copiado!" : "Copiar link do laudo"}
+        </button>
+        <button
+          onClick={() => window.print()}
+          style={{
+            display: "flex", alignItems: "center", gap: 12, width: "100%", height: 52,
+            background: "var(--bg2)", color: "var(--t2)", border: "1px solid var(--bd)",
+            borderRadius: "var(--rs)", fontSize: 14, fontWeight: 700, cursor: "pointer", padding: "0 18px",
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🖨</span> Imprimir / Salvar PDF
         </button>
       </div>
 

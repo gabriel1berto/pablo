@@ -59,10 +59,71 @@ export default function LP() {
           sobre o carro.
         </h1>
 
-        <p style={{ fontSize: 16, color: "var(--t2)", lineHeight: 1.65 }}>
-          Em 8 minutos você tem um laudo completo com FIPE, checklist técnico e
-          análise de documentação.
+        <p style={{ fontSize: 16, color: "var(--t2)", lineHeight: 1.65, marginBottom: 32 }}>
+          Em 8 minutos você tem um laudo completo com checklist técnico,
+          análise de documentação e posição de preço.
         </p>
+
+        {/* Value props */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+          {/* Buyer */}
+          <div style={{
+            background: "var(--bg2)", border: "1px solid var(--bd)",
+            borderRadius: "var(--rm)", padding: "16px 18px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
+                background: "var(--ag)", color: "var(--accent)", letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              }}>
+                Para quem compra
+              </span>
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 4 }}>
+              Descubra o que o vendedor não conta
+            </div>
+            <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: 10 }}>
+              Checklist de 15+ pontos técnicos, alertas documentais, posição de preço vs. FIPE
+              e recomendação clara — Boa Compra, Cautela ou Não Recomendado.
+            </div>
+            <Link
+              href="/laudo/ba45f916/resultado"
+              style={{ fontSize: 12, color: "var(--accent)", fontWeight: 600, textDecoration: "none" }}
+            >
+              Ver exemplo: Onix 2017 — Score 8.8 Boa Compra →
+            </Link>
+          </div>
+
+          {/* Seller */}
+          <div style={{
+            background: "var(--bg2)", border: "1px solid var(--bd)",
+            borderRadius: "var(--rm)", padding: "16px 18px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
+                background: "rgba(167,139,250,0.1)", color: "#A78BFA", letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              }}>
+                Para quem vende
+              </span>
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 4 }}>
+              Venda mais rápido com transparência
+            </div>
+            <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: 10 }}>
+              Gere um laudo de transparência do seu carro e compartilhe no anúncio.
+              Compradores confiam mais, barganha menos e fecham mais rápido.
+            </div>
+            <Link
+              href="/laudo/8188fbf4/resultado"
+              style={{ fontSize: 12, color: "#A78BFA", fontWeight: 600, textDecoration: "none" }}
+            >
+              Ver exemplo: Onix 2017 — Laudo de transparência →
+            </Link>
+          </div>
+        </div>
 
         {/* Stats */}
         <div
@@ -70,7 +131,7 @@ export default function LP() {
             display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr",
             gap: 10,
-            marginTop: 36,
+            marginBottom: 8,
           }}
         >
           {[
@@ -113,12 +174,6 @@ export default function LP() {
             </div>
           ))}
         </div>
-
-        {/* Social proof */}
-        <p style={{ fontSize: 12, color: "var(--t3)", marginTop: 20 }}>
-          <strong style={{ color: "var(--t2)" }}>1.200 laudos gerados</strong>{" "}
-          · nota <strong style={{ color: "var(--t2)" }}>4.9 ★</strong>
-        </p>
       </div>
 
       {/* CTA */}

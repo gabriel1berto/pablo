@@ -19,16 +19,17 @@ export async function researchModelIssues(
   const supabase = createServiceClient();
   const modelKey = normalizeModelKey(model);
 
-  // Já pesquisado (sentinel ou items reais)? Não repetir.
+  // Já pesquisado com itens reais? Não repetir.
   const { data: existing } = await supabase
     .from("car_issues")
-    .select("id")
+    .select("id, category")
     .ilike("model_pattern", `%${modelKey}%`)
-    .limit(1);
+    .limit(5);
 
-  if (existing && existing.length > 0) return;
+  const hasRealItems = (existing ?? []).some(r => r.category !== "_sentinel");
+  if (hasRealItems) return;
 
-  // Insert sentinel before API call — prevents infinite loader loop on timeout
+  // Insert sentinel antes da chamada à API — evita loop em caso de timeout
   await supabase.from("car_issues").insert({
     brand,
     model_pattern: modelKey,
@@ -85,16 +86,20 @@ Gere exatamente 15 itens cobrindo as principais categorias. Foque em falhas REAI
 
     const block = message.content[0];
     if (block.type === "text") {
+      // Sanitiza caracteres de controle antes do parse
       const raw = block.text.trim().replace(/^```json\n?|```$/g, "");
-      items = JSON.parse(raw);
+      const sanitized = raw.replace(/[\x00-\x1F\x7F]/g, " ");
+      items = JSON.parse(sanitized);
     }
   } catch (err) {
     console.error("[research] Haiku error:", err);
-    // Salva o erro no sentinel para diagnóstico
-    await supabase.from("car_issues")
-      .update({ description: String(err) })
+    // Remove sentinel em caso de falha — permite retry na próxima visita
+    await supabase
+      .from("car_issues")
+      .delete()
       .eq("model_pattern", modelKey)
       .eq("category", "_sentinel");
+    return;
   }
 
   const validCategories = [
@@ -107,8 +112,13 @@ Gere exatamente 15 itens cobrindo as principais categorias. Foque em falhas REAI
     "eletrica",
   ];
 
-  if (Array.isArray(items) && items.length > 0) {
-    const rows = (items as Record<string, unknown>[]).map((item, idx) => ({
+  // Filtra itens malformados antes de inserir
+  const validItems = (items as Record<string, unknown>[]).filter(
+    (item) => item.title && item.category && item.severity
+  );
+
+  if (validItems.length > 0) {
+    const rows = validItems.map((item, idx) => ({
       brand,
       model_pattern: modelKey,
       year_from: Math.max(2000, year - 3),
@@ -128,5 +138,12 @@ Gere exatamente 15 itens cobrindo as principais categorias. Foque em falhas REAI
       sort_order: Number(item.sort_order) || idx + 1,
     }));
     await supabase.from("car_issues").insert(rows);
+  } else {
+    // Sem itens válidos — remove sentinel para permitir retry
+    await supabase
+      .from("car_issues")
+      .delete()
+      .eq("model_pattern", modelKey)
+      .eq("category", "_sentinel");
   }
 }
