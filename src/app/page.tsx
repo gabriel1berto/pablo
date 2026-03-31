@@ -41,106 +41,126 @@ export default function LP() {
           tudo antes de fechar negócio.
         </p>
 
-        {/* Accordions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
+        {/* Result preview */}
+        <div style={{
+          background: "var(--bg2)", border: "1px solid var(--bd)",
+          borderRadius: "var(--rm)", overflow: "hidden", marginBottom: 24,
+        }}>
+          {/* Preview header */}
+          <div style={{ padding: "14px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 11, color: "var(--t4)", letterSpacing: "0.3px" }}>
+              Chevrolet Onix 2017 · 45.000 km
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99, background: "var(--ag)", color: "var(--accent)", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+              Exemplo
+            </span>
+          </div>
 
-          {/* Buyer */}
-          <details style={{ background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)", overflow: "hidden" }} open>
-            <summary style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "14px 16px", cursor: "pointer", listStyle: "none",
-              userSelect: "none",
+          {/* Verdict hero */}
+          <div style={{
+            background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
+            borderRadius: "var(--rm)", margin: "12px 14px",
+            padding: "16px 14px", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>
+              Avaliação Pablo
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "var(--ok)", textTransform: "uppercase", lineHeight: 1.1, marginBottom: 6 }}>
+              Boa Compra
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 3, marginBottom: 6 }}>
+              <span style={{ fontSize: 32, fontWeight: 900, color: "var(--ok)", letterSpacing: "-1px", lineHeight: 1 }}>8.8</span>
+              <span style={{ fontSize: 14, color: "var(--t3)" }}>/10</span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--t3)" }}>1 atenção · preço alinhado com FIPE</div>
+          </div>
+
+          {/* Sample finding */}
+          <div style={{ padding: "0 14px" }}>
+            <div style={{
+              background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.2)",
+              borderRadius: 12, padding: "10px 12px", marginBottom: 8,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
-                  background: "var(--ag)", color: "var(--accent)",
-                  letterSpacing: "0.5px", textTransform: "uppercase", flexShrink: 0,
-                }}>
-                  Comprando
-                </span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>
-                  Descobrir o que o vendedor esconde
-                </span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--t1)" }}>Pneus com desgaste irregular</span>
+                <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 99, background: "rgba(234,179,8,0.15)", color: "var(--warn)", letterSpacing: "0.3px" }}>ATENÇÃO</span>
               </div>
-              <span style={{ fontSize: 16, color: "var(--t4)", flexShrink: 0, marginLeft: 8 }}>▾</span>
-            </summary>
-            <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--bd)" }}>
-              <p style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.6, margin: "12px 0 14px" }}>
-                Checklist de 15+ pontos técnicos por modelo, alertas documentais e posição de preço vs. FIPE.
-                Resultado claro: <strong style={{ color: "var(--ok)" }}>Boa Compra</strong>,{" "}
-                <strong style={{ color: "var(--warn)" }}>Cautela</strong> ou{" "}
-                <strong style={{ color: "var(--danger)" }}>Não Recomendado</strong>.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <Link
-                  href="/cadastro"
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    height: 44, background: "var(--accent)", color: "#050505",
-                    borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800,
-                    textDecoration: "none",
-                  }}
-                >
-                  Avaliar carro que vou comprar →
-                </Link>
-                <Link
-                  href="/laudo/ba45f916/resultado"
-                  style={{ fontSize: 12, color: "var(--t3)", textAlign: "center", textDecoration: "none" }}
-                >
-                  Ver exemplo: Onix 2017 · Score 8.8 · Boa Compra
-                </Link>
+              <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 4, lineHeight: 1.4 }}>
+                Reparo estimado: <strong style={{ color: "var(--t2)" }}>R$ 400–800</strong>
               </div>
             </div>
-          </details>
 
-          {/* Seller */}
-          <details style={{ background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: "var(--rm)", overflow: "hidden" }}>
-            <summary style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "14px 16px", cursor: "pointer", listStyle: "none",
-              userSelect: "none",
+            {/* Sample positive */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)",
+              borderRadius: 12, padding: "8px 12px", marginBottom: 8,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 99,
-                  background: "rgba(167,139,250,0.12)", color: "#A78BFA",
-                  letterSpacing: "0.5px", textTransform: "uppercase", flexShrink: 0,
-                }}>
-                  Vendendo
-                </span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>
-                  Vender mais rápido com transparência
-                </span>
-              </div>
-              <span style={{ fontSize: 16, color: "var(--t4)", flexShrink: 0, marginLeft: 8 }}>▾</span>
-            </summary>
-            <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--bd)" }}>
-              <p style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.6, margin: "12px 0 14px" }}>
-                Gere um laudo de transparência do seu carro e cole o link no anúncio.
-                Compradores confiam mais, negociam menos e fecham mais rápido.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <Link
-                  href="/cadastro"
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    height: 44, background: "#A78BFA", color: "#050505",
-                    borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800,
-                    textDecoration: "none",
-                  }}
-                >
-                  Gerar laudo do meu carro →
-                </Link>
-                <Link
-                  href="/laudo/8188fbf4/resultado"
-                  style={{ fontSize: 12, color: "var(--t3)", textAlign: "center", textDecoration: "none" }}
-                >
-                  Ver exemplo: Onix 2017 · Laudo de transparência
-                </Link>
+              <span style={{ fontSize: 12, color: "var(--ok)" }}>✓</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--t1)" }}>Motor sem ruídos anormais</span>
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)",
+              borderRadius: 12, padding: "8px 12px", marginBottom: 10,
+            }}>
+              <span style={{ fontSize: 12, color: "var(--ok)" }}>✓</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--t1)" }}>Transmissão sem solavancos</span>
+            </div>
+          </div>
+
+          {/* Sample recommendation */}
+          <div style={{ padding: "0 14px 14px" }}>
+            <div style={{
+              display: "flex", gap: 10,
+              background: "var(--bg3)", borderRadius: 12, padding: "10px 12px",
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: "50%", background: "var(--bg4)", color: "var(--accent)",
+                fontSize: 9, fontWeight: 900, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>1</div>
+              <div style={{ fontSize: 11, color: "var(--t2)", lineHeight: 1.5 }}>
+                Na negociação: peça desconto para cobrir troca dos pneus — R$ 400–800.
               </div>
             </div>
-          </details>
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+          <Link
+            href="/cadastro"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              height: 48, background: "var(--accent)", color: "#050505",
+              borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800,
+              textDecoration: "none",
+            }}
+          >
+            Avaliar carro que vou comprar →
+          </Link>
+          <Link
+            href="/cadastro"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              height: 48, background: "#A78BFA", color: "#050505",
+              borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800,
+              textDecoration: "none",
+            }}
+          >
+            Gerar laudo do meu carro →
+          </Link>
+        </div>
+
+        {/* Example links */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 32 }}>
+          <Link
+            href="/laudo/52ce00a0-c142-4739-9141-f273718db41f"
+            style={{ fontSize: 11, color: "var(--t4)", textDecoration: "none" }}
+          >
+            Ver laudo real →
+          </Link>
         </div>
 
         {/* Stats */}

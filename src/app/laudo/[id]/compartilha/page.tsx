@@ -16,6 +16,8 @@ type Laudo = {
   created_at: string;
   user_id: string;
   tipo: string;
+  fipe_price: number | null;
+  asking_price: number | null;
 };
 
 const VERDICT_COLOR: Record<string, string> = {
@@ -37,7 +39,7 @@ export default function CompartilhaPage() {
     const client = createClient();
     client
       .from("laudos")
-      .select("id, brand, model, year, km, score, verdict, created_at, user_id, tipo")
+      .select("id, brand, model, year, km, score, verdict, created_at, user_id, tipo, fipe_price, asking_price")
       .eq("id", id)
       .single()
       .then(({ data }) => {

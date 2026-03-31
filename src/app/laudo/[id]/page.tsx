@@ -42,28 +42,144 @@ const CAUTELAR_LABEL: Record<string, string> = {
 };
 
 const CAUTELAR_DETAIL: Record<string, string> = {
-  crlv: "Veículo com documentação irregular pode ser apreendido. O comprador assume o risco.",
-  multas: "Multas vinculadas ao veículo são transferidas automaticamente ao novo proprietário.",
-  sinistro: "Histórico de batida pode indicar reparos ocultos que comprometem estrutura e segurança.",
-  gravame: "Financiamento ativo — a venda sem quitação é ilegal e o carro pode ser retomado pelo banco.",
-  recall: "Defeito reconhecido pelo fabricante ainda não corrigido.",
-  manutencoes: "Sem comprovante de revisão não há como atestar o estado real de motor e câmbio.",
+  crlv: "Veículo com documentação irregular pode ser apreendido. O comprador assume o risco e eventuais dívidas.",
+  multas: "Multas vinculadas ao veículo (não ao condutor) são transferidas automaticamente ao novo proprietário.",
+  sinistro: "Histórico de batida pode indicar reparos ocultos que comprometem estrutura e segurança passiva.",
+  gravame: "Veículo com financiamento ativo — a venda sem quitação é ilegal e o carro pode ser retomado pelo banco.",
+  recall: "Defeito reconhecido pelo fabricante ainda não corrigido. Pode representar risco à segurança.",
+  manutencoes: "Sem comprovante de revisão não há como atestar o estado real de motor, câmbio e componentes críticos.",
 };
 
-const SEV_COLOR: Record<string, string> = {
-  critical: "var(--danger)",
-  warn: "var(--warn)",
-  ok: "var(--ok)",
+const CAT_LABEL: Record<string, string> = {
+  motor: "Motor", transmissao: "Transmissão", suspensao: "Suspensão",
+  freios: "Freios", pneus: "Pneus", carroceria: "Carroceria",
+  eletrica: "Elétrica", documentacao: "Documentação", "Precificação": "Precificação",
 };
 
-function verdictColor(label: string) {
-  if (label === "Boa Compra") return "var(--ok)";
-  if (label === "Não Recomendado") return "var(--danger)";
-  return "var(--warn)";
+function verdict(score: number) {
+  if (score >= 8) return { label: "Boa Compra", color: "var(--ok)", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.2)" };
+  if (score >= 6) return { label: "Compra com Cautela", color: "var(--warn)", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.2)" };
+  if (score >= 4) return { label: "Risco Moderado", color: "var(--warn)", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.2)" };
+  return { label: "Não Recomendado", color: "var(--danger)", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)" };
 }
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+type Finding = {
+  text: string;
+  detail?: string;
+  if_bad?: string | null;
+  severity: "critical" | "warn" | "ok";
+  category: string;
+  repair_cost?: string | null;
+};
+
+type CautelarAlert = { key: string; label: string; detail: string };
+
+function buildHeroContext(
+  isVendedor: boolean,
+  findings: Finding[],
+  cautelarAlerts: CautelarAlert[],
+  diffPct: number
+): string {
+  if (isVendedor) {
+    const probs = findings.filter((f) => f.severity !== "ok").length;
+    if (probs > 0) return `${probs} ponto${probs > 1 ? "s" : ""} declarado${probs > 1 ? "s" : ""}`;
+    return "Nenhum problema declarado";
+  }
+  const parts: string[] = [];
+  if (cautelarAlerts.length > 0)
+    parts.push(`${cautelarAlerts.length} alerta${cautelarAlerts.length > 1 ? "s" : ""} documental${cautelarAlerts.length > 1 ? "is" : ""}`);
+  const criticals = findings.filter((f) => f.severity === "critical").length;
+  const warns = findings.filter((f) => f.severity === "warn").length;
+  if (criticals > 0) parts.push(`${criticals} crítico${criticals > 1 ? "s" : ""}`);
+  else if (warns > 0) parts.push(`${warns} atenção`);
+  if (diffPct > 10) parts.push(`preço ${diffPct.toFixed(0)}% acima da FIPE`);
+  if (parts.length === 0) return "Nenhum problema identificado";
+  return parts.join(" · ");
+}
+
+function buildSteps(
+  isVendedor: boolean,
+  cautelarAlerts: CautelarAlert[],
+  findings: Finding[],
+  diffPct: number
+): string[] {
+  if (isVendedor) {
+    const probs = findings.filter((f) => f.severity !== "ok");
+    return [
+      probs.length > 0
+        ? `Declare no anúncio: ${probs.slice(0, 2).map((f) => f.text.toLowerCase()).join(" e ")}.`
+        : "Nenhum problema declarado — destaque isso no anúncio como diferencial.",
+      diffPct > 5
+        ? `Preço ${diffPct.toFixed(0)}% acima da FIPE. Ajuste o valor ou prepare justificativa para o comprador.`
+        : "Preço alinhado com o mercado — boa posição de negociação.",
+      "Compartilhe este laudo no seu anúncio. Vendedores com laudo fecham mais rápido e com menos barganha.",
+    ];
+  }
+
+  const criticals = findings.filter((f) => f.severity === "critical");
+  const withCost = findings.filter((f) => f.repair_cost && f.severity !== "ok");
+
+  let step1: string;
+  if (cautelarAlerts.some((a) => a.key === "gravame")) {
+    step1 = "Antes de fechar: exija comprovante de quitação do financiamento — sem isso o carro pode ser retomado pelo banco após a compra.";
+  } else if (cautelarAlerts.length > 0) {
+    step1 = `Antes de fechar: resolva ${cautelarAlerts[0].label.toLowerCase()} — ${cautelarAlerts[0].detail.split(".")[0].toLowerCase()}.`;
+  } else if (criticals.length > 0) {
+    step1 = `Antes de fechar: leve para avaliação de mecânico com foco em "${criticals[0].text.toLowerCase()}".`;
+  } else {
+    step1 = "Nenhum bloqueio crítico identificado — você pode avançar na negociação.";
+  }
+
+  let step2: string;
+  if (withCost.length > 0 && diffPct > 5) {
+    step2 = `Na negociação: peça desconto para cobrir os reparos (${withCost.map((f) => f.repair_cost).join(", ")}) mais a diferença de ${diffPct.toFixed(0)}% da FIPE.`;
+  } else if (withCost.length > 0) {
+    step2 = `Na negociação: peça desconto para cobrir os reparos identificados — ${withCost.map((f) => f.repair_cost).join(", ")}.`;
+  } else if (diffPct > 5) {
+    step2 = `Na negociação: o preço está ${diffPct.toFixed(0)}% acima da FIPE — argumento direto para pedir desconto.`;
+  } else if (diffPct < -5) {
+    step2 = `Preço ${Math.abs(diffPct).toFixed(0)}% abaixo da FIPE — pouca margem de negociação mas negócio equilibrado.`;
+  } else {
+    step2 = "Preço justo e sem reparos urgentes — pouca margem de negociação mas negócio equilibrado.";
+  }
+
+  let step3: string;
+  const topCritical = criticals[0];
+  if (topCritical) {
+    step3 = `Se fechar: priorize corrigir "${topCritical.text.toLowerCase()}" nos primeiros meses.`;
+  } else {
+    step3 = "Carro em boas condições gerais — mantenha revisões em dia e aproveite a compra.";
+  }
+
+  return [step1, step2, step3];
+}
+
+function SectionDivider({ label, counter }: { label: string; counter?: string }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      marginBottom: 16, marginTop: 8,
+    }}>
+      <div style={{ flex: 1, height: 1, background: "var(--bd)" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+          {label}
+        </span>
+        {counter && (
+          <span style={{ fontSize: 10, color: "var(--t4)", fontWeight: 600 }}>{counter}</span>
+        )}
+      </div>
+      <div style={{ flex: 1, height: 1, background: "var(--bd)" }} />
+    </div>
+  );
 }
 
 export default async function LaudoPublicoPage({
@@ -73,11 +189,9 @@ export default async function LaudoPublicoPage({
 }) {
   const { id } = await params;
 
-  // Auth check (may be null for anonymous visitors)
   const userSupabase = await createClient();
   const { data: { user } } = await userSupabase.auth.getUser();
 
-  // Data fetch via service client (bypasses RLS for public access)
   const service = createServiceClient();
 
   const { data: laudo } = await service
@@ -144,7 +258,7 @@ export default async function LaudoPublicoPage({
     );
   }
 
-  // Fetch items for the completed laudo
+  // ── Fetch items for completed laudo ───────────────────────────
   const { data: allItems } = await service
     .from("laudo_items")
     .select("*")
@@ -157,46 +271,43 @@ export default async function LaudoPublicoPage({
   const { data: issues } = issueIds.length
     ? await service
         .from("car_issues")
-        .select("id, title, description, severity, category, repair_cost")
+        .select("id, title, description, if_bad, severity, category, repair_cost")
         .in("id", issueIds)
     : { data: [] };
 
-  // Reconstruct findings
-  type Finding = {
-    text: string;
-    detail?: string;
-    severity: "critical" | "warn" | "ok";
-    category: string;
-    repair_cost?: string | null;
-  };
+  // ── Score & findings ──────────────────────────────────────────
+  let score = 10;
   const findings: Finding[] = [];
 
   for (const issue of issues ?? []) {
     const item = checklistItems.find((i) => i.item_key === String(issue.id));
-    if (item?.notes === "problema") {
-      findings.push({
-        text: issue.title,
-        detail: issue.description,
-        severity: issue.severity === "critical" ? "critical" : "warn",
-        category: issue.category ?? "Inspeção",
-        repair_cost: issue.repair_cost,
-      });
+    const state = item?.notes ?? "nd";
+
+    if (state === "problema") {
+      if (issue.severity === "critical") {
+        score -= 2.5;
+        findings.push({
+          text: issue.title,
+          detail: issue.description,
+          if_bad: issue.if_bad,
+          severity: "critical",
+          category: issue.category ?? "Inspeção",
+          repair_cost: issue.repair_cost,
+        });
+      } else {
+        score -= 1.2;
+        findings.push({
+          text: issue.title,
+          detail: issue.description,
+          if_bad: issue.if_bad,
+          severity: "warn",
+          category: issue.category ?? "Inspeção",
+          repair_cost: issue.repair_cost,
+        });
+      }
     }
   }
 
-  if (laudo.fipe_price && laudo.asking_price) {
-    const diffPct = ((laudo.asking_price - laudo.fipe_price) / laudo.fipe_price) * 100;
-    if (diffPct > 5) {
-      findings.push({
-        text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`,
-        detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)}`,
-        severity: diffPct > 20 ? "critical" : "warn",
-        category: "Precificação",
-      });
-    }
-  }
-
-  type CautelarAlert = { key: string; label: string; detail: string };
   const cautelarAlerts: CautelarAlert[] = cautelarItems
     .filter((c) => c.notes === "atencao")
     .map((c) => ({
@@ -205,33 +316,82 @@ export default async function LaudoPublicoPage({
       detail: CAUTELAR_DETAIL[c.item_key] ?? "",
     }));
 
+  let diffPct = 0;
+  if (laudo.fipe_price && laudo.asking_price) {
+    diffPct = ((laudo.asking_price - laudo.fipe_price) / laudo.fipe_price) * 100;
+    if (diffPct > 20) {
+      score -= 2.0;
+      findings.push({
+        text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`,
+        detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)} · diferença de ${fmt(laudo.asking_price - laudo.fipe_price)}`,
+        severity: "critical",
+        category: "Precificação",
+      });
+    } else if (diffPct > 10) {
+      score -= 1.0;
+      findings.push({
+        text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`,
+        detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)} · diferença de ${fmt(laudo.asking_price - laudo.fipe_price)}`,
+        severity: "warn",
+        category: "Precificação",
+      });
+    } else if (diffPct > 5) {
+      score -= 0.5;
+      findings.push({
+        text: `Preço ${diffPct.toFixed(1)}% acima da FIPE`,
+        detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)} · diferença de ${fmt(laudo.asking_price - laudo.fipe_price)}`,
+        severity: "warn",
+        category: "Precificação",
+      });
+    } else if (diffPct < 0) {
+      findings.push({
+        text: `Preço ${Math.abs(diffPct).toFixed(1)}% abaixo da FIPE — bom negócio`,
+        detail: `Pedindo ${fmt(laudo.asking_price)} · FIPE ${fmt(laudo.fipe_price)}`,
+        severity: "ok",
+        category: "Precificação",
+      });
+    }
+  }
+
+  score = Math.round(Math.max(0, Math.min(10, score)) * 10) / 10;
+  if (isNaN(score)) score = 10;
+
+  const v = verdict(score);
   const isVendedor = laudo.tipo === "vendedor";
-  const vc = verdictColor(laudo.verdict ?? "");
-  const date = new Date(laudo.created_at).toLocaleDateString("pt-BR");
+
+  const positiveCriticals = (issues ?? []).filter((issue) => {
+    const item = checklistItems.find((i) => i.item_key === String(issue.id));
+    return item?.notes === "ok" && issue.severity === "critical";
+  });
+
+  const problemFindings = findings.filter((f) => f.severity !== "ok");
+  const heroContext = buildHeroContext(isVendedor, problemFindings, cautelarAlerts, diffPct);
+  const steps = buildSteps(isVendedor, cautelarAlerts, problemFindings, diffPct);
 
   const groups: Record<string, typeof findings> = {};
-  for (const f of findings) {
+  for (const f of problemFindings) {
     if (!groups[f.category]) groups[f.category] = [];
     groups[f.category].push(f);
   }
 
+  const totalChecked = checklistItems.length;
+  const problemCount = problemFindings.filter((f) => f.category !== "Precificação").length;
+
   return (
     <main style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", padding: "0 24px 80px" }}>
-      {/* Brand header */}
-      <div style={{ paddingTop: 40, paddingBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.5px" }}>
-          pa<span style={{ color: "var(--accent)" }}>b</span>lo
-        </span>
-        <span style={{ fontSize: 12, color: "var(--t4)" }}>{date}</span>
-      </div>
 
-      {/* Vehicle */}
-      <div style={{ marginBottom: 4 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 4 }}>
-          {laudo.brand} {laudo.model} {laudo.year}
-        </h1>
-        <div style={{ fontSize: 13, color: "var(--t3)" }}>
-          {laudo.km.toLocaleString("pt-BR")} km{laudo.state ? ` · ${laudo.state}` : ""}
+      {/* Brand header */}
+      <div style={{ paddingTop: 40, paddingBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <span style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.5px" }}>
+            pa<span style={{ color: "var(--accent)" }}>b</span>lo
+          </span>
+          <span style={{ fontSize: 11, color: "var(--t4)" }}>{fmtDate(laudo.created_at)}</span>
+        </div>
+
+        {/* Vehicle info */}
+        <div style={{ fontSize: 11, color: "var(--t4)", letterSpacing: "0.3px" }}>
+          {laudo.brand} {laudo.model} {laudo.year} · {laudo.km.toLocaleString("pt-BR")} km{laudo.state ? ` · ${laudo.state}` : ""}
         </div>
         {isVendedor && (
           <div style={{
@@ -245,96 +405,130 @@ export default async function LaudoPublicoPage({
         )}
       </div>
 
-      {/* Score */}
+      {/* Hero — verdict dominant */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 16,
-        background: "var(--bg2)", border: "1px solid var(--bd)",
-        borderRadius: "var(--rm)", padding: "16px 20px", margin: "20px 0",
+        background: v.bg,
+        border: `1px solid ${v.border}`,
+        borderRadius: "var(--rm)",
+        padding: "24px 20px",
+        marginBottom: 28,
+        textAlign: "center",
       }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
-          <span style={{ fontSize: 52, fontWeight: 900, color: vc, letterSpacing: "-2px", lineHeight: 1 }}>
-            {laudo.score?.toFixed(1)}
-          </span>
-          <span style={{ fontSize: 16, color: "var(--t3)" }}>/10</span>
+        <div style={{
+          fontSize: 11, fontWeight: 800, color: "var(--t4)",
+          textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12,
+        }}>
+          {isVendedor ? "Laudo de transparência" : "Avaliação Pablo"}
         </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: vc }}>{laudo.verdict}</div>
-          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>Laudo Pablo</div>
+        <div style={{
+          fontSize: 34, fontWeight: 900, color: v.color,
+          letterSpacing: "-0.5px", textTransform: "uppercase", lineHeight: 1.1,
+          marginBottom: 10,
+        }}>
+          {v.label}
+        </div>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4, marginBottom: 12 }}>
+          <span style={{ fontSize: 48, fontWeight: 900, color: v.color, letterSpacing: "-2px", lineHeight: 1 }}>
+            {score.toFixed(1)}
+          </span>
+          <span style={{ fontSize: 18, color: "var(--t3)", fontWeight: 400 }}>/10</span>
+        </div>
+        <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5 }}>
+          {heroContext}
         </div>
       </div>
 
-      {/* Cautelar alerts */}
+      {/* Documental alerts */}
       {cautelarAlerts.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
-            Alertas documentais
-          </div>
+        <div style={{ marginBottom: 28 }}>
+          <SectionDivider label="Alertas documentais" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {cautelarAlerts.map((alert) => (
               <div key={alert.key} style={{
-                background: "var(--dg)", border: "1px solid rgba(239,68,68,0.2)",
-                borderRadius: "var(--rm)", padding: "12px 14px",
+                background: "rgba(239,68,68,0.06)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                borderRadius: "var(--rm)", padding: "14px 16px",
               }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 99, background: "rgba(239,68,68,0.15)", color: "var(--danger)", letterSpacing: "0.4px" }}>
+                    DOCUMENTAL
+                  </span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--danger)", marginBottom: 5 }}>
                   {alert.label}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>{alert.detail}</div>
+                <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55 }}>
+                  {alert.detail}
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Findings */}
-      {Object.keys(groups).length > 0 ? (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12 }}>
-            Problemas identificados
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Mechanical problems */}
+      {Object.keys(groups).length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <SectionDivider
+            label="Problemas identificados"
+            counter={totalChecked > 0 ? `${problemCount} de ${totalChecked} itens` : undefined}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {Object.entries(groups).map(([category, items]) => (
               <div key={category}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 6 }}>
-                  {category}
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {items.map((f, i) => (
-                    <div key={i} style={{
-                      background: "var(--bg2)",
-                      border: `1px solid ${f.severity === "critical" ? "rgba(239,68,68,0.2)" : f.severity === "warn" ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
-                      borderRadius: "var(--rm)", padding: "12px 14px",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)", lineHeight: 1.4, flex: 1 }}>
-                          {f.text}
-                        </div>
+                {items.map((f, i) => (
+                  <div key={i} style={{
+                    background: f.severity === "critical" ? "rgba(239,68,68,0.05)" : f.severity === "warn" ? "rgba(234,179,8,0.05)" : "rgba(34,197,94,0.05)",
+                    border: `1px solid ${f.severity === "critical" ? "rgba(239,68,68,0.2)" : f.severity === "warn" ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.15)"}`,
+                    borderRadius: "var(--rm)", padding: "14px 16px",
+                    marginBottom: 8,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", lineHeight: 1.4, flex: 1 }}>
+                        {f.text}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
                         <span style={{
-                          fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99, flexShrink: 0,
-                          background: f.severity === "critical" ? "var(--dg)" : f.severity === "warn" ? "var(--wg)" : "var(--og)",
-                          color: SEV_COLOR[f.severity],
+                          fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 99, whiteSpace: "nowrap",
+                          background: f.severity === "critical" ? "rgba(239,68,68,0.15)" : f.severity === "warn" ? "rgba(234,179,8,0.15)" : "rgba(34,197,94,0.15)",
+                          color: f.severity === "critical" ? "var(--danger)" : f.severity === "warn" ? "var(--warn)" : "var(--ok)",
+                          letterSpacing: "0.3px",
                         }}>
-                          {f.severity === "critical" ? "Crítico" : f.severity === "warn" ? "Atenção" : "OK"}
+                          {f.severity === "critical" ? "CRITICO" : f.severity === "warn" ? "ATENÇÃO" : "OK"}
+                        </span>
+                        <span style={{ fontSize: 10, color: "var(--t4)", fontWeight: 600 }}>
+                          {CAT_LABEL[category] ?? category}
                         </span>
                       </div>
-                      {f.detail && (
-                        <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 6, lineHeight: 1.5 }}>{f.detail}</div>
-                      )}
-                      {f.repair_cost && (
-                        <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 5 }}>
-                          Reparo estimado: <strong style={{ color: "var(--t3)" }}>{f.repair_cost}</strong>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
+                    {f.if_bad && (
+                      <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.55, marginBottom: f.repair_cost ? 6 : 0 }}>
+                        {f.if_bad}
+                      </div>
+                    )}
+                    {!f.if_bad && f.detail && (
+                      <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.55, marginBottom: f.repair_cost ? 6 : 0 }}>
+                        {f.detail}
+                      </div>
+                    )}
+                    {f.repair_cost && (
+                      <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 4 }}>
+                        Reparo estimado: <strong style={{ color: "var(--t3)" }}>{f.repair_cost}</strong>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             ))}
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* No problems */}
+      {Object.keys(groups).length === 0 && (
         <div style={{
-          background: "var(--og)", border: "1px solid rgba(34,197,94,0.15)",
-          borderRadius: "var(--rm)", padding: "14px 16px", marginBottom: 24,
+          background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)",
+          borderRadius: "var(--rm)", padding: "14px 16px", marginBottom: 28,
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ok)" }}>
             Nenhum problema identificado na inspeção.
@@ -342,13 +536,58 @@ export default async function LaudoPublicoPage({
         </div>
       )}
 
+      {/* Positives */}
+      {positiveCriticals.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <SectionDivider label={`${positiveCriticals.length} ponto${positiveCriticals.length > 1 ? "s" : ""} crítico${positiveCriticals.length > 1 ? "s" : ""} verificado${positiveCriticals.length > 1 ? "s" : ""} e OK`} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {positiveCriticals.map((issue) => (
+              <div key={issue.id} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)",
+                borderRadius: "var(--rm)", padding: "10px 14px",
+              }}>
+                <span style={{ fontSize: 14, color: "var(--ok)", flexShrink: 0 }}>✓</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--t1)" }}>{issue.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3-step recommendation */}
+      <div style={{ marginBottom: 32 }}>
+        <SectionDivider label={isVendedor ? "Recomendações" : "O que fazer agora"} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {steps.map((step, i) => (
+            <div key={i} style={{
+              display: "flex", gap: 12,
+              background: "var(--bg2)", border: "1px solid var(--bd)",
+              borderRadius: "var(--rm)", padding: "14px 16px",
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%",
+                background: "var(--bg3)", color: "var(--accent)",
+                fontSize: 11, fontWeight: 900, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {i + 1}
+              </div>
+              <div style={{ fontSize: 13, color: "var(--t1)", lineHeight: 1.6, flex: 1 }}>
+                {step}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* CTA */}
-      <div style={{ marginTop: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {isVendedor ? (
           <>
             <div style={{
               background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.15)",
-              borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 12,
+              borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 2,
               fontSize: 12, color: "var(--t3)", lineHeight: 1.6,
             }}>
               Este laudo foi preenchido pelo próprio vendedor. Faça sua inspeção independente antes de fechar negócio.
@@ -376,7 +615,7 @@ export default async function LaudoPublicoPage({
             >
               Criar meu laudo grátis →
             </Link>
-            <div style={{ fontSize: 11, color: "var(--t4)", textAlign: "center", marginTop: 10 }}>
+            <div style={{ fontSize: 11, color: "var(--t4)", textAlign: "center", marginTop: 2 }}>
               Avalie qualquer carro usado antes de comprar
             </div>
           </>
