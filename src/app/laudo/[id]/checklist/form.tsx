@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { salvarChecklist } from "./actions";
+import Chat from "./chat";
 
 type Issue = {
   id: number;
@@ -236,21 +237,9 @@ export default function ChecklistForm({
         </div>
       ))}
 
-      {/* Promise card */}
-      <div style={{
-        background: "var(--bg2)", border: "1px solid var(--bd)",
-        borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 4,
-        display: "flex", alignItems: "flex-start", gap: 10,
-      }}>
-        <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>📸</span>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t2)", marginBottom: 2 }}>
-            Em breve: avaliação por fotos
-          </div>
-          <div style={{ fontSize: 11, color: "var(--t4)", lineHeight: 1.5 }}>
-            Envie fotos do carro e nossa IA identifica problemas automaticamente.
-          </div>
-        </div>
+      {/* AI Chat */}
+      <div style={{ marginBottom: 4 }}>
+        <Chat laudoId={laudoId} />
       </div>
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>

@@ -153,14 +153,74 @@ export default function LP() {
           </Link>
         </div>
 
-        {/* Example links */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 32 }}>
+        {/* Example link */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
           <Link
             href="/laudo/52ce00a0-c142-4739-9141-f273718db41f"
             style={{ fontSize: 11, color: "var(--t4)", textDecoration: "none" }}
           >
             Ver laudo real →
           </Link>
+        </div>
+
+        {/* AI Chat feature */}
+        <div style={{
+          background: "var(--bg2)", border: "1px solid var(--bd)",
+          borderRadius: "var(--rm)", overflow: "hidden", marginBottom: 24,
+        }}>
+          <div style={{ padding: "16px 16px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: "var(--ag)", color: "var(--accent)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, fontWeight: 900, flexShrink: 0,
+              }}>AI</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--t1)" }}>
+                  IA que vê o carro com você
+                </div>
+                <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 1 }}>
+                  Tire fotos, pergunte, receba análise instantânea
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mock chat */}
+          <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* User message with image placeholder */}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{
+                background: "var(--accent)", color: "#050505",
+                borderRadius: "14px 14px 4px 14px", padding: "10px 14px",
+                maxWidth: "80%",
+              }}>
+                <div style={{
+                  width: "100%", height: 80, borderRadius: 8,
+                  background: "rgba(0,0,0,0.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginBottom: 6, fontSize: 24,
+                }}>
+                  <span style={{ opacity: 0.4 }}>🔍</span>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>Esse desgaste é grave?</div>
+              </div>
+            </div>
+
+            {/* Assistant response */}
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{
+                background: "var(--bg3)", color: "var(--t1)",
+                borderRadius: "14px 14px 14px 4px", padding: "10px 14px",
+                maxWidth: "85%",
+              }}>
+                <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+                  O pneu dianteiro esquerdo tem desgaste na borda interna — sinal de <strong style={{ color: "var(--warn)" }}>desalinhamento</strong>. Para um Onix 2017 com 45k km, recomendo troca dos 2 dianteiros. <strong style={{ color: "var(--t2)" }}>Custo: R$ 400–600.</strong>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
