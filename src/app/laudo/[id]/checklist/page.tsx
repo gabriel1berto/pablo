@@ -127,7 +127,7 @@ export default async function ChecklistPage({
                   : <>Marque <strong>OK</strong> ou <strong>Problema</strong> em cada item.</>}
               </div>
             </div>
-            <ChecklistForm laudoId={id} issues={displayIssues} />
+            <ChecklistForm laudoId={id} issues={displayIssues} carInfo={{ brand: laudo.brand, model: laudo.model, year: laudo.year, km: laudo.km }} />
           </>
         )}
       </div>

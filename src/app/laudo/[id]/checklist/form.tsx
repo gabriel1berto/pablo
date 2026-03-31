@@ -47,9 +47,11 @@ function requiresMechanic(issue: Issue): boolean {
 export default function ChecklistForm({
   laudoId,
   issues,
+  carInfo,
 }: {
   laudoId: string;
   issues: Issue[];
+  carInfo: { brand: string; model: string; year: number; km: number };
 }) {
   const [states, setStates] = useState<Record<number, State>>({});
   const [openItems, setOpenItems] = useState<Set<number>>(() => {
@@ -241,6 +243,7 @@ export default function ChecklistForm({
       <div style={{ marginBottom: 4 }}>
         <Chat
           laudoId={laudoId}
+          carInfo={carInfo}
           checklistState={issues.map((iss) => ({
             id: iss.id,
             title: iss.title,

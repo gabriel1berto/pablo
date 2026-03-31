@@ -46,9 +46,11 @@ function buildApiContent(text: string, images?: string[]): ApiContent {
 export default function Chat({
   laudoId,
   checklistState,
+  carInfo,
 }: {
   laudoId: string;
   checklistState: ChecklistState[];
+  carInfo: { brand: string; model: string; year: number; km: number };
 }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -319,29 +321,46 @@ export default function Chat({
         {messages.length === 0 && (
           <div style={{
             flex: 1, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: "20px 10px", gap: 20,
+            padding: "16px 4px", gap: 14,
           }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: "50%",
-              background: "var(--ag)", color: "var(--accent)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, fontWeight: 900,
-            }}>AI</div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--t1)", marginBottom: 6 }}>
-                Fala, como posso ajudar?
-              </div>
-              <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5 }}>
-                Pergunta sobre o carro ou manda uma foto.
+            {/* Welcome message as assistant bubble */}
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{
+                maxWidth: "90%", background: "var(--bg2)", color: "var(--t1)",
+                borderRadius: 16, borderBottomLeftRadius: 4,
+                padding: "14px 16px",
+              }}>
+                <div style={{ fontSize: 14, lineHeight: 1.65 }}>
+                  {(() => {
+                    const p = problems.length;
+                    const a = answered.length;
+                    const total = checklistState.length;
+                    if (a === 0) {
+                      return `Tô aqui pra te ajudar com o ${carInfo.brand} ${carInfo.model} ${carInfo.year}. Pode me mandar foto de qualquer parte do carro ou perguntar sobre os ${total} itens do checklist.`;
+                    }
+                    if (p > 0) {
+                      return `Já vi que você marcou ${p} problema${p > 1 ? "s" : ""} no checklist (${a}/${total} itens). Manda foto dos pontos com problema ou me pergunta o que quiser.`;
+                    }
+                    return `${a}/${total} itens verificados e tudo OK até agora. Quer que eu analise alguma foto do carro ou tem alguma dúvida?`;
+                  })()}
+                </div>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 300 }}>
-              {[
-                "O preço tá justo?",
-                "Esse desgaste é grave?",
-                "O que verificar primeiro?",
-              ].map((q) => (
+
+            {/* Contextual suggestions */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingLeft: 4 }}>
+              {(problems.length > 0
+                ? [
+                    `O que significa "${problems[0].title.toLowerCase()}"?`,
+                    "Manda foto de um problema",
+                    `Quanto custa pra resolver?`,
+                  ]
+                : [
+                    `Pontos fracos do ${carInfo.model} ${carInfo.year}?`,
+                    "Manda foto de uma peça",
+                    `Com ${carInfo.km.toLocaleString("pt-BR")} km, o que checar?`,
+                  ]
+              ).map((q) => (
                 <button
                   key={q}
                   type="button"
