@@ -24,6 +24,40 @@ export async function criarLaudo(formData: FormData) {
     return { error: "Preencha todos os campos obrigatórios." };
   }
 
+  // ── Verificar crédito ANTES de inserir ──────────────────────
+  const { data: freeAccount } = await supabase
+    .from("free_accounts")
+    .select("email")
+    .eq("email", user.email ?? "")
+    .maybeSingle();
+
+  let creditToConsume: string | null = null;
+
+  if (!freeAccount) {
+    const { count: laudoCount } = await supabase
+      .from("laudos")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if ((laudoCount ?? 0) >= 1) {
+      // Precisa de crédito — tenta reservar um
+      const { data: credit } = await supabase
+        .from("laudo_credits")
+        .select("id")
+        .eq("user_id", user.id)
+        .is("used_at", null)
+        .limit(1)
+        .single();
+
+      if (!credit) {
+        return { error: "Sem créditos. Compre um laudo para continuar." };
+      }
+
+      creditToConsume = credit.id;
+    }
+  }
+
+  // ── Inserir laudo ───────────────────────────────────────────
   const { data, error } = await supabase
     .from("laudos")
     .insert({ user_id: user.id, brand, model, year, km, condition, asking_price, state, tipo })
@@ -34,29 +68,13 @@ export async function criarLaudo(formData: FormData) {
     return { error: "Erro ao salvar. Tente novamente." };
   }
 
-  // Conta free — não consome crédito
-  const { data: freeAccount } = await supabase
-    .from("free_accounts")
-    .select("email")
-    .eq("email", user.email ?? "")
-    .maybeSingle();
-
-  if (!freeAccount) {
-    // Marca crédito como usado (se existir — primeiro laudo é gratuito)
-    const { data: credit } = await supabase
+  // ── Consumir crédito (se necessário) ────────────────────────
+  if (creditToConsume) {
+    await supabase
       .from("laudo_credits")
-      .select("id")
-      .eq("user_id", user.id)
-      .is("used_at", null)
-      .limit(1)
-      .single();
-
-    if (credit) {
-      await supabase
-        .from("laudo_credits")
-        .update({ used_at: new Date().toISOString() })
-        .eq("id", credit.id);
-    }
+      .update({ used_at: new Date().toISOString() })
+      .eq("id", creditToConsume)
+      .is("used_at", null); // garante que não consome crédito já usado (race condition)
   }
 
   return { id: data.id };

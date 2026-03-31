@@ -45,11 +45,16 @@ export default function CompartilhaPage() {
       .then(({ data }) => {
         if (!data) { setNotFound(true); return; }
         setLaudo(data);
-        client
-          .from("laudos")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", data.user_id)
-          .then(({ count }) => setLaudoCount(count ?? 0));
+        // Só conta laudos do próprio usuário logado
+        client.auth.getUser().then(({ data: { user } }) => {
+          if (user && user.id === data.user_id) {
+            client
+              .from("laudos")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .then(({ count }) => setLaudoCount(count ?? 0));
+          }
+        });
       });
   }, [id]);
 

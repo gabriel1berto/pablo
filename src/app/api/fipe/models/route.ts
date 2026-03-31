@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const brandCode = searchParams.get("brand");
-  if (!brandCode) return NextResponse.json([]);
+  if (!brandCode || !/^\d+$/.test(brandCode)) return NextResponse.json([]);
 
   const res = await fetch(
     `https://fipe.parallelum.com.br/api/v2/cars/brands/${brandCode}/models`,

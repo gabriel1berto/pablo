@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { researchModelIssues } from "@/lib/research";
+import { createClient } from "@/lib/supabase/server";
 
-export const maxDuration = 60; // segundos — requer plano Vercel Pro ou hobby com fluid compute
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
     const { brand, model, year, km } = await req.json();
     if (!brand || !model || !year || !km) {
       return NextResponse.json({ error: "Parâmetros inválidos" }, { status: 400 });

@@ -16,6 +16,7 @@ export async function signUp(formData: FormData) {
   const name = formData.get("name") as string;
 
   if (!email) return { error: "Preencha o e-mail." };
+  if (!name?.trim()) return { error: "Preencha o nome." };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({

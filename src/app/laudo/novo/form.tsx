@@ -183,7 +183,7 @@ export default function VeiculoForm() {
 
   // Build year list: FIPE years if available, else static fallback
   const yearList = availableYears
-    ?? Array.from({ length: 27 }, (_, i) => 2026 - i);
+    ?? Array.from({ length: 27 }, (_, i) => new Date().getFullYear() + 1 - i);
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>

@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const brandCode = searchParams.get("brand");
   const modelCode = searchParams.get("model");
-  if (!brandCode || !modelCode) return NextResponse.json([]);
+  if (!brandCode || !modelCode || !/^\d+$/.test(brandCode) || !/^\d+$/.test(modelCode)) return NextResponse.json([]);
 
   const res = await fetch(
     `https://fipe.parallelum.com.br/api/v2/cars/brands/${brandCode}/models/${modelCode}/years`,
