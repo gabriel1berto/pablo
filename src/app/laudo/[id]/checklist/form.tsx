@@ -239,7 +239,16 @@ export default function ChecklistForm({
 
       {/* AI Chat */}
       <div style={{ marginBottom: 4 }}>
-        <Chat laudoId={laudoId} />
+        <Chat
+          laudoId={laudoId}
+          checklistState={issues.map((iss) => ({
+            id: iss.id,
+            title: iss.title,
+            category: iss.category,
+            severity: iss.severity,
+            state: states[iss.id] ?? null,
+          }))}
+        />
       </div>
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>

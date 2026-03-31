@@ -2,10 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 
+type ChecklistState = {
+  id: number;
+  title: string;
+  category: string;
+  severity: string;
+  state: "ok" | "problema" | null;
+};
+
 type Msg = {
   role: "user" | "assistant";
   content: string;
-  images?: string[]; // base64 data URIs for display
+  images?: string[];
 };
 
 type ApiContent =
@@ -35,7 +43,13 @@ function buildApiContent(text: string, images?: string[]): ApiContent {
   return parts;
 }
 
-export default function Chat({ laudoId }: { laudoId: string }) {
+export default function Chat({
+  laudoId,
+  checklistState,
+}: {
+  laudoId: string;
+  checklistState: ChecklistState[];
+}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -43,6 +57,7 @@ export default function Chat({ laudoId }: { laudoId: string }) {
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -62,7 +77,7 @@ export default function Chat({ laudoId }: { laudoId: string }) {
     if (!files) return;
     for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) continue;
-      if (file.size > 5 * 1024 * 1024) continue; // 5MB max
+      if (file.size > 5 * 1024 * 1024) continue;
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === "string") {
@@ -83,8 +98,11 @@ export default function Chat({ laudoId }: { laudoId: string }) {
     if (!text && !images.length) return;
     if (streaming) return;
 
-    const userMsg: Msg = { role: "user", content: text || "Analise esta imagem.", images: images.length ? [...images] : undefined };
-    const apiContent = buildApiContent(text, images);
+    const userMsg: Msg = {
+      role: "user",
+      content: text || "Analise esta imagem.",
+      images: images.length ? [...images] : undefined,
+    };
 
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
@@ -92,7 +110,6 @@ export default function Chat({ laudoId }: { laudoId: string }) {
     setImages([]);
     setStreaming(true);
 
-    // Build API messages history
     const apiMessages = newMessages.map((m) => {
       if (m.role === "user" && m.images?.length) {
         return { role: m.role as "user" | "assistant", content: buildApiContent(m.content, m.images) };
@@ -104,7 +121,11 @@ export default function Chat({ laudoId }: { laudoId: string }) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ laudoId, messages: apiMessages }),
+        body: JSON.stringify({
+          laudoId,
+          messages: apiMessages,
+          checklistState: checklistState.filter((i) => i.state !== null),
+        }),
       });
 
       if (!res.ok) {
@@ -123,11 +144,8 @@ export default function Chat({ laudoId }: { laudoId: string }) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
+        for (const line of chunk.split("\n")) {
           if (!line.startsWith("data: ")) continue;
           const data = line.slice(6);
           if (data === "[DONE]") break;
@@ -147,7 +165,6 @@ export default function Chat({ laudoId }: { laudoId: string }) {
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Erro de conexão. Tente novamente." }]);
     }
-
     setStreaming(false);
   }
 
@@ -157,6 +174,9 @@ export default function Chat({ laudoId }: { laudoId: string }) {
       send();
     }
   }
+
+  const answered = checklistState.filter((i) => i.state !== null);
+  const problems = answered.filter((i) => i.state === "problema");
 
   if (!open) {
     return (
@@ -168,7 +188,6 @@ export default function Chat({ laudoId }: { laudoId: string }) {
           width: "100%", padding: "14px 16px",
           background: "var(--bg2)", border: "1px solid var(--bd)",
           borderRadius: "var(--rm)", cursor: "pointer",
-          transition: "border-color .15s",
         }}
       >
         <div style={{
@@ -211,19 +230,15 @@ export default function Chat({ laudoId }: { laudoId: string }) {
             background: "var(--ag)", color: "var(--accent)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 10, fontWeight: 900,
-          }}>
-            AI
-          </div>
+          }}>AI</div>
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Pablo</span>
-          <span style={{
-            fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 99,
-            background: "var(--ag)", color: "var(--accent)",
-            letterSpacing: "0.3px", textTransform: "uppercase",
-          }}>
-            Online
-          </span>
+          {answered.length > 0 && (
+            <span style={{ fontSize: 10, color: "var(--t4)" }}>
+              vendo {answered.length} itens{problems.length > 0 ? ` · ${problems.length} problema${problems.length > 1 ? "s" : ""}` : ""}
+            </span>
+          )}
         </div>
-        <span style={{ fontSize: 18, color: "var(--t4)" }}>−</span>
+        <span style={{ fontSize: 18, color: "var(--t4)" }}>-</span>
       </div>
 
       {/* Messages */}
@@ -235,18 +250,15 @@ export default function Chat({ laudoId }: { laudoId: string }) {
         }}
       >
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px 10px" }}>
-            <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.6 }}>
-              Pergunte qualquer coisa sobre o carro ou envie fotos para análise.
+          <div style={{ textAlign: "center", padding: "32px 10px" }}>
+            <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.6, marginBottom: 16 }}>
+              Pergunte sobre o carro ou tire uma foto para análise.
             </div>
-            <div style={{
-              display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center",
-              marginTop: 16,
-            }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
               {[
-                "Esse barulho é normal?",
                 "O preço tá justo?",
                 "Esse desgaste é grave?",
+                "O que verificar primeiro?",
               ].map((q) => (
                 <button
                   key={q}
@@ -257,22 +269,14 @@ export default function Chat({ laudoId }: { laudoId: string }) {
                     background: "var(--ag)", border: "1px solid rgba(0,212,170,0.2)",
                     borderRadius: 99, padding: "5px 12px", cursor: "pointer",
                   }}
-                >
-                  {q}
-                </button>
+                >{q}</button>
               ))}
             </div>
           </div>
         )}
 
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-            }}
-          >
+          <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
             <div style={{
               maxWidth: "85%",
               background: msg.role === "user" ? "var(--accent)" : "var(--bg3)",
@@ -282,31 +286,20 @@ export default function Chat({ laudoId }: { laudoId: string }) {
               borderBottomLeftRadius: msg.role === "assistant" ? 4 : 14,
               padding: "10px 14px",
             }}>
-              {/* User images */}
               {msg.images?.map((img, j) => (
-                <img
-                  key={j}
-                  src={img}
-                  alt=""
-                  style={{
-                    width: "100%", maxWidth: 200, borderRadius: 8,
-                    marginBottom: msg.content ? 8 : 0,
-                    display: "block",
-                  }}
-                />
+                <img key={j} src={img} alt="" style={{
+                  width: "100%", maxWidth: 200, borderRadius: 8,
+                  marginBottom: msg.content ? 8 : 0, display: "block",
+                }} />
               ))}
               {msg.content && (
-                <div style={{
-                  fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}>
+                <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                   {msg.content}
                   {msg.role === "assistant" && streaming && i === messages.length - 1 && (
                     <span style={{
                       display: "inline-block", width: 5, height: 14,
                       background: "var(--accent)", marginLeft: 2,
-                      animation: "blink 1s infinite",
-                      verticalAlign: "text-bottom",
+                      animation: "blink 1s infinite", verticalAlign: "text-bottom",
                     }} />
                   )}
                 </div>
@@ -318,32 +311,16 @@ export default function Chat({ laudoId }: { laudoId: string }) {
 
       {/* Image previews */}
       {images.length > 0 && (
-        <div style={{
-          display: "flex", gap: 8, padding: "8px 14px 0",
-          overflowX: "auto",
-        }}>
+        <div style={{ display: "flex", gap: 8, padding: "8px 14px 0", overflowX: "auto" }}>
           {images.map((img, i) => (
             <div key={i} style={{ position: "relative", flexShrink: 0 }}>
-              <img
-                src={img}
-                alt=""
-                style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover" }}
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(i)}
-                style={{
-                  position: "absolute", top: -6, right: -6,
-                  width: 18, height: 18, borderRadius: "50%",
-                  background: "var(--danger)", color: "#fff",
-                  border: "none", fontSize: 10, fontWeight: 900,
-                  cursor: "pointer", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  lineHeight: 1,
-                }}
-              >
-                x
-              </button>
+              <img src={img} alt="" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover" }} />
+              <button type="button" onClick={() => removeImage(i)} style={{
+                position: "absolute", top: -6, right: -6, width: 18, height: 18,
+                borderRadius: "50%", background: "var(--danger)", color: "#fff",
+                border: "none", fontSize: 10, fontWeight: 900, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>x</button>
             </div>
           ))}
         </div>
@@ -351,37 +328,41 @@ export default function Chat({ laudoId }: { laudoId: string }) {
 
       {/* Input area */}
       <div style={{
-        display: "flex", alignItems: "flex-end", gap: 8,
-        padding: "10px 14px 12px",
+        display: "flex", alignItems: "flex-end", gap: 6,
+        padding: "10px 12px 12px",
         borderTop: "1px solid var(--bd)",
       }}>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFile}
-          style={{ display: "none" }}
-        />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          style={{
-            width: 36, height: 36, borderRadius: "50%",
-            background: "var(--bg3)", border: "1px solid var(--bd)",
-            color: "var(--t3)", fontSize: 18,
-            cursor: "pointer", flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          +
+        {/* Hidden file inputs */}
+        <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFile} style={{ display: "none" }} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display: "none" }} />
+
+        {/* Camera button */}
+        <button type="button" onClick={() => cameraRef.current?.click()} style={{
+          width: 36, height: 36, borderRadius: "50%",
+          background: "var(--bg3)", border: "1px solid var(--bd)",
+          color: "var(--t2)", fontSize: 16, cursor: "pointer", flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
         </button>
+
+        {/* Gallery button */}
+        <button type="button" onClick={() => fileRef.current?.click()} style={{
+          width: 36, height: 36, borderRadius: "50%",
+          background: "var(--bg3)", border: "1px solid var(--bd)",
+          color: "var(--t3)", fontSize: 16, cursor: "pointer", flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>+</button>
+
         <textarea
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Digite ou envie uma foto..."
+          placeholder="Pergunte algo..."
           rows={1}
           style={{
             flex: 1, resize: "none",
@@ -398,20 +379,13 @@ export default function Chat({ laudoId }: { laudoId: string }) {
           disabled={streaming || (!input.trim() && !images.length)}
           style={{
             width: 36, height: 36, borderRadius: "50%",
-            background: streaming || (!input.trim() && !images.length)
-              ? "var(--bg3)"
-              : "var(--accent)",
-            color: streaming || (!input.trim() && !images.length)
-              ? "var(--t4)"
-              : "#050505",
+            background: streaming || (!input.trim() && !images.length) ? "var(--bg3)" : "var(--accent)",
+            color: streaming || (!input.trim() && !images.length) ? "var(--t4)" : "#050505",
             border: "none", fontSize: 16, fontWeight: 900,
-            cursor: streaming ? "not-allowed" : "pointer",
-            flexShrink: 0,
+            cursor: streaming ? "not-allowed" : "pointer", flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
-        >
-          ↑
-        </button>
+        >↑</button>
       </div>
 
       <style>{`

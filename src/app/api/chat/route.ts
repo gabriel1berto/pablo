@@ -13,11 +13,18 @@ export async function POST(req: Request) {
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const body = await req.json();
-  const { laudoId, messages } = body as {
+  const { laudoId, messages, checklistState } = body as {
     laudoId: string;
     messages: Array<{
       role: "user" | "assistant";
       content: string | Array<{ type: string; text?: string; source?: { type: string; media_type: string; data: string } }>;
+    }>;
+    checklistState?: Array<{
+      id: number;
+      title: string;
+      category: string;
+      severity: string;
+      state: "ok" | "problema";
     }>;
   };
 
@@ -25,7 +32,6 @@ export async function POST(req: Request) {
     return new Response("Missing laudoId or messages", { status: 400 });
   }
 
-  // Fetch laudo
   const { data: laudo } = await supabase
     .from("laudos")
     .select("brand, model, year, km, asking_price, fipe_price, tipo")
@@ -35,59 +41,43 @@ export async function POST(req: Request) {
 
   if (!laudo) return new Response("Laudo not found", { status: 404 });
 
-  // Fetch checklist answers + issues
-  const { data: items } = await supabase
-    .from("laudo_items")
-    .select("item_key, notes, category")
-    .eq("laudo_id", laudoId);
-
-  const checklistItems = items?.filter((i) => i.category === "checklist") ?? [];
-  const cautelarItems = items?.filter((i) => i.category === "cautelar") ?? [];
-
-  const issueIds = checklistItems.map((i) => parseInt(i.item_key)).filter(Boolean);
-
-  let issueContext = "";
-  if (issueIds.length) {
-    const { data: issues } = await supabase
-      .from("car_issues")
-      .select("id, title, category, severity, if_bad, repair_cost")
-      .in("id", issueIds);
-
-    if (issues?.length) {
-      const lines = issues.map((iss) => {
-        const item = checklistItems.find((i) => i.item_key === String(iss.id));
-        const status = item?.notes ?? "não verificado";
-        return `- ${iss.title} (${iss.category}, ${iss.severity}): ${status}${status === "problema" && iss.if_bad ? ` → ${iss.if_bad}` : ""}${iss.repair_cost ? ` [reparo: ${iss.repair_cost}]` : ""}`;
-      });
-      issueContext = `\n\nChecklist respondido:\n${lines.join("\n")}`;
+  // Build checklist context from live state (sent by client)
+  let checklistContext = "";
+  if (checklistState?.length) {
+    const problems = checklistState.filter((i) => i.state === "problema");
+    const oks = checklistState.filter((i) => i.state === "ok");
+    const lines: string[] = [];
+    if (problems.length) {
+      lines.push("PROBLEMAS MARCADOS:");
+      for (const p of problems) lines.push(`  - ${p.title} (${p.category}, ${p.severity})`);
     }
+    if (oks.length) {
+      lines.push(`OK: ${oks.map((o) => o.title).join(", ")}`);
+    }
+    checklistContext = `\n\n${lines.join("\n")}`;
   }
-
-  const cautelarContext = cautelarItems.length
-    ? `\n\nCautelar:\n${cautelarItems.map((c) => `- ${c.item_key}: ${c.notes}`).join("\n")}`
-    : "";
 
   const priceContext =
     laudo.asking_price && laudo.fipe_price
       ? `\nPreço pedido: R$ ${laudo.asking_price.toLocaleString("pt-BR")} · FIPE: R$ ${laudo.fipe_price.toLocaleString("pt-BR")}`
       : "";
 
-  const systemPrompt = `Você é o Pablo, assistente especialista em compra e venda de carros usados no Brasil.
-Você está ajudando o usuário que está ${laudo.tipo === "vendedor" ? "vendendo" : "avaliando para comprar"} o seguinte veículo:
+  const systemPrompt = `Você é mecânico e consultor automotivo com 20 anos de experiência no mercado brasileiro de usados. Especialista em ${laudo.brand} ${laudo.model}.
 
-${laudo.brand} ${laudo.model} ${laudo.year} · ${laudo.km.toLocaleString("pt-BR")} km${priceContext}${issueContext}${cautelarContext}
+Veículo: ${laudo.brand} ${laudo.model} ${laudo.year} · ${laudo.km.toLocaleString("pt-BR")} km
+Contexto: ${laudo.tipo === "vendedor" ? "vendedor declarando estado do carro" : "comprador avaliando antes de fechar"}${priceContext}${checklistContext}
 
 Regras:
-- Respostas curtas e diretas. Máximo 3 parágrafos.
-- Se o usuário enviar foto, analise visualmente com foco em problemas mecânicos, estéticos ou de conservação relevantes para a compra/venda.
-- Sempre contextualize para o modelo/ano/km específico.
-- Se identificar algo na foto, diga o que é, a gravidade, e o custo estimado de reparo.
-- Fale em português brasileiro informal mas profissional.
-- Não invente problemas. Se não conseguir ver claramente, diga isso.`;
+- Máximo 2-3 frases por resposta. Sem enrolação.
+- Foto recebida: diga o que vê, se é problema, gravidade, custo estimado de reparo. Se não der pra ver direito, peça foto mais próxima.
+- Sempre contextualiza pro modelo/ano/km. "No Onix 2017 com 45k km isso é comum" > "pode ser um problema".
+- Custo de reparo sempre em range (R$ X–Y).
+- Se o checklist mostra problemas, considere na resposta.
+- Sem formalidades, sem "olá", sem "espero ter ajudado". Vai direto.`;
 
   const stream = await client.messages.stream({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
+    max_tokens: 512,
     system: systemPrompt,
     messages: messages.map((m) => ({
       role: m.role,
