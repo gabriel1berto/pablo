@@ -246,10 +246,10 @@ export default function Chat({
         }}>AI</div>
         <div style={{ textAlign: "left" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>
-            Dúvida? Pergunte ao Pablo
+            Fale com o Pablo
           </div>
           <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 1 }}>
-            Tire fotos e receba análise instantânea
+            Manda foto, pergunta, ele conhece o carro
           </div>
         </div>
         {messages.length > 0 && (
