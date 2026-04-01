@@ -2,6 +2,30 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+
+async function siteUrl() {
+  const h = await headers();
+  const host = h.get("host") ?? "localhost:3000";
+  const proto = host.includes("localhost") ? "http" : "https";
+  return `${proto}://${host}`;
+}
+
+export async function signInWithGoogle() {
+  const supabase = await createClient();
+  const base = await siteUrl();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${base}/auth/callback`,
+    },
+  });
+
+  if (error || !data.url) {
+    redirect("/login");
+  }
+  redirect(data.url);
+}
 
 export async function signUp(formData: FormData) {
   const email = formData.get("email") as string;
@@ -31,6 +55,17 @@ export async function signUp(formData: FormData) {
   }
 
   return { error: "Erro inesperado. Tente novamente." };
+}
+
+export async function resetPassword(formData: FormData) {
+  const email = formData.get("email") as string;
+  if (!email) return { error: "Preencha o e-mail." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 export async function signIn(formData: FormData) {
