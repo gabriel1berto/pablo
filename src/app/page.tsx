@@ -142,12 +142,7 @@ export default function LP() {
           display: "flex", alignItems: "center", gap: 10,
           marginBottom: 14,
         }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: "var(--ag)", color: "var(--accent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: 900,
-          }}>AI</div>
+          <img src="/icon-pablo.png" alt="P" style={{ width: 32, height: 32, borderRadius: "50%" }} />
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "var(--t1)" }}>Fale com o Pablo</div>
             <div style={{ fontSize: 12, color: "var(--t3)" }}>Seu mecânico de bolso</div>

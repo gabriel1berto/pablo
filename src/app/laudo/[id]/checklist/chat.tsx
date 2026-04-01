@@ -238,12 +238,7 @@ export default function Chat({
           borderRadius: "var(--rm)", cursor: "pointer",
         }}
       >
-        <div style={{
-          width: 32, height: 32, borderRadius: "50%",
-          background: "var(--ag)", color: "var(--accent)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 15, fontWeight: 900, flexShrink: 0,
-        }}>AI</div>
+        <img src="/icon-pablo.png" alt="P" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} />
         <div style={{ textAlign: "left" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>
             Fale com o Pablo
@@ -279,12 +274,7 @@ export default function Chat({
         flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%",
-            background: "var(--ag)", color: "var(--accent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 900,
-          }}>AI</div>
+          <img src="/icon-pablo.png" alt="P" style={{ width: 28, height: 28, borderRadius: "50%" }} />
           <div>
             <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>Pablo</span>
             {answered.length > 0 && (
