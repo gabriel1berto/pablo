@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "./logout-button";
 
 const VERDICT_COLOR: Record<string, string> = {
   "Boa Compra": "var(--ok)",
@@ -127,12 +126,9 @@ export default async function MeusLaudosPage() {
           <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px", marginTop: 16, marginBottom: 2 }}>
             Meus laudos
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <p style={{ fontSize: 13, color: "var(--t3)" }}>
-              {laudos?.length ?? 0} laudo{laudos?.length !== 1 ? "s" : ""}
-            </p>
-            <LogoutButton />
-          </div>
+          <p style={{ fontSize: 13, color: "var(--t3)" }}>
+            {laudos?.length ?? 0} laudo{laudos?.length !== 1 ? "s" : ""}
+          </p>
         </div>
         <Link
           href="/laudo/novo"

@@ -145,24 +145,40 @@ export default function CautelarForm({ laudoId }: { laudoId: string }) {
       })}
 
       <div style={{ paddingTop: 8, paddingBottom: 48 }}>
-        {erro && (
-          <div style={{ fontSize: 13, color: "var(--danger)", textAlign: "center", marginBottom: 10 }}>
-            {erro}
-          </div>
-        )}
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "100%", height: 54,
-            background: loading ? "#00a884" : "var(--accent)", color: "#050505",
-            border: "none", borderRadius: "var(--rs)", fontSize: 15, fontWeight: 800,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Salvando..." : "Próximo →"}
-        </button>
+        {(() => {
+          const pending = ITEMS.filter((i) => values[i.key] === "nd").length;
+          return (
+            <>
+              <div style={{
+                fontSize: 12, textAlign: "center", marginBottom: 14,
+                color: pending > 0 ? "var(--warn)" : "var(--t3)",
+              }}>
+                {pending > 0
+                  ? `Falta responder ${pending} item${pending > 1 ? "s" : ""}`
+                  : "Tudo respondido"}
+              </div>
+              {erro && (
+                <div style={{ fontSize: 13, color: "var(--danger)", textAlign: "center", marginBottom: 10 }}>
+                  {erro}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={loading || pending > 0}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: "100%", height: 54,
+                  background: loading ? "#00a884" : "var(--accent)", color: "#050505",
+                  border: "none", borderRadius: "var(--rs)", fontSize: 15, fontWeight: 800,
+                  cursor: loading || pending > 0 ? "not-allowed" : "pointer",
+                  opacity: pending > 0 ? 0.5 : 1,
+                }}
+              >
+                {loading ? "Salvando..." : "Próximo →"}
+              </button>
+            </>
+          );
+        })()}
       </div>
     </form>
   );

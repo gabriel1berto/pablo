@@ -205,9 +205,9 @@ export default function CompartilhaPage() {
       {/* Upsell — only shown after first laudo */}
       {laudoCount >= 2 && (
         <div style={{ background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: "var(--rm)", padding: "16px 18px" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 5 }}>Próximo laudo por R$ 100</div>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 5 }}>Próximo laudo por R$ 20</div>
           <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>
-            Você usou seu laudo gratuito. Laudos adicionais são R$ 100 cada.
+            Você usou seu laudo gratuito. Laudos adicionais são R$ 20 cada.
           </div>
           <Link href="/laudo/novo" style={{ display: "inline-block", marginTop: 12, fontSize: 13, fontWeight: 700, color: "#A78BFA", textDecoration: "none" }}>
             Fazer novo laudo →

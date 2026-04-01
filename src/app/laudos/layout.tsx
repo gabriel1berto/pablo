@@ -1,6 +1,6 @@
 import AppNav from "@/app/components/app-nav";
 
-export default function LaudoLayout({ children }: { children: React.ReactNode }) {
+export default function LaudosLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
