@@ -113,9 +113,7 @@ export default function CompartilhaPage() {
       {/* Preview card */}
       <div style={{ background: "var(--bg2)", border: "1px solid var(--bd)", borderRadius: 20, overflow: "hidden", marginBottom: 24 }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--bd)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.5px" }}>
-            pa<span style={{ color: "var(--accent)" }}>b</span>lo
-          </span>
+          <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 24 }} />
           <span style={{ fontSize: 11, color: "var(--t3)" }}>{date}</span>
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--bd)" }}>

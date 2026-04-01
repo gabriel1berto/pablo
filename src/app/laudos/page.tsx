@@ -121,9 +121,7 @@ export default async function MeusLaudosPage() {
       <div style={{ paddingTop: 52, paddingBottom: 32, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <Link href="/" style={{ textDecoration: "none" }}>
-            <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px" }}>
-              pa<span style={{ color: "var(--accent)" }}>b</span>lo
-            </span>
+            <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 28 }} />
           </Link>
           <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px", marginTop: 16, marginBottom: 2 }}>
             Meus laudos

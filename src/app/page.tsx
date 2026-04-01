@@ -39,9 +39,7 @@ export default function LP() {
 
       {/* ── Logo ──────────────────────────────────────── */}
       <div style={{ paddingTop: 48 }}>
-        <span style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.8px" }}>
-          pa<span style={{ color: "var(--accent)" }}>b</span>lo
-        </span>
+        <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 32, display: "block" }} />
       </div>
 
       {/* ── Hero ──────────────────────────────────────── */}
@@ -308,40 +306,6 @@ export default function LP() {
         </div>
         <span style={{ fontSize: 14, color: "var(--t3)" }}>→</span>
       </Link>
-
-      {/* ── Como funciona ─────────────────────────────── */}
-      <div style={{ marginBottom: 48 }}>
-        <div style={{
-          fontSize: 10, fontWeight: 800, color: "var(--t4)",
-          textTransform: "uppercase", letterSpacing: "1px", marginBottom: 14,
-        }}>
-          Como funciona
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {[
-            { n: "1", t: "Coloca os dados do carro", d: "Marca, modelo, ano, km e quanto tão pedindo" },
-            { n: "2", t: "Passa pelo checklist", d: "O Pablo monta as perguntas certas pro modelo" },
-            { n: "3", t: "Recebe o laudo", d: "Nota, problemas, custos e quanto pedir de desconto" },
-          ].map((s) => (
-            <div key={s.n} style={{
-              display: "flex", gap: 14, alignItems: "flex-start",
-              background: "var(--bg2)", border: "1px solid var(--bd)",
-              borderRadius: "var(--rm)", padding: "14px 16px",
-            }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%",
-                background: "var(--ag)", color: "var(--accent)",
-                fontSize: 12, fontWeight: 900, flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>{s.n}</div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 2 }}>{s.t}</div>
-                <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>{s.d}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ── Garantia ──────────────────────────────────── */}
       <div style={{
