@@ -29,7 +29,7 @@ export default function PagamentoPage() {
   return (
     <main style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", padding: "52px 24px 64px" }}>
       <div style={{ marginBottom: 32 }}>
-        <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 28 }} />
+        <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 44 }} />
       </div>
 
       <h1 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 8 }}>

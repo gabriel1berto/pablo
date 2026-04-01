@@ -68,7 +68,7 @@ export default function Cadastro() {
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: 480, margin: "0 auto", padding: "0 24px" }}>
       <div style={{ paddingTop: 56 }}>
         <Link href="/" style={{ textDecoration: "none" }}>
-          <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 28 }} />
+          <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 44 }} />
         </Link>
       </div>
 

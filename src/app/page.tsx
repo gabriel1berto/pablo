@@ -39,7 +39,7 @@ export default function LP() {
 
       {/* ── Logo ──────────────────────────────────────── */}
       <div style={{ paddingTop: 48 }}>
-        <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 32, display: "block" }} />
+        <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 56, display: "block" }} />
       </div>
 
       {/* ── Hero ──────────────────────────────────────── */}

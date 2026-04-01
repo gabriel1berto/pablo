@@ -383,7 +383,7 @@ export default async function LaudoPublicoPage({
       {/* Brand header */}
       <div style={{ paddingTop: 40, paddingBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 26 }} />
+          <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 40 }} />
           <span style={{ fontSize: 11, color: "var(--t4)" }}>{fmtDate(laudo.created_at)}</span>
         </div>
 
