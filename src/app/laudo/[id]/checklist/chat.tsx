@@ -48,11 +48,13 @@ export default function Chat({
   checklistState,
   carInfo,
   initialQuestion,
+  userLevel,
 }: {
   laudoId: string;
   checklistState: ChecklistState[];
   carInfo: { brand: string; model: string; year: number; km: number };
   initialQuestion?: string | null;
+  userLevel?: "leigo" | "preparado" | null;
 }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -152,6 +154,7 @@ export default function Chat({
           laudoId,
           messages: apiMessages,
           checklistState: checklistState.filter((i) => i.state !== null),
+          userLevel: userLevel ?? "leigo",
         }),
         signal: controller.signal,
       });

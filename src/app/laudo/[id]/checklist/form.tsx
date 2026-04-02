@@ -68,6 +68,7 @@ export default function ChecklistForm({
     }
     return open;
   });
+  const [mechanicOpen, setMechanicOpen] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [helpQuestion, setHelpQuestion] = useState<string | null>(null);
@@ -82,18 +83,19 @@ export default function ChecklistForm({
       else next.add(id);
       return next;
     });
+  const toggleMechanic = (id: number) =>
+    setMechanicOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
-  // Filter issues based on level
-  const filteredIssues = level === "leigo"
-    ? issues.filter((i) => !requiresMechanic(i))
-    : issues;
-
-  const grouped = filteredIssues.reduce<Record<string, Issue[]>>((acc, issue) => {
+  // All issues shown — no filtering
+  const grouped = issues.reduce<Record<string, Issue[]>>((acc, issue) => {
     (acc[issue.category] ??= []).push(issue);
     return acc;
   }, {});
-
-  const mechanicOnlyCount = issues.filter((i) => requiresMechanic(i)).length;
 
   const answered = Object.keys(states).length;
   const problemCount = Object.values(states).filter((s) => s === "problema").length;
@@ -103,7 +105,6 @@ export default function ChecklistForm({
     setErro("");
     setLoading(true);
     const fd = new FormData();
-    // Submit ALL issues (including filtered ones as "nd")
     issues.forEach((issue) => {
       fd.append("item_id", String(issue.id));
       fd.append(`item_state_${issue.id}`, states[issue.id] ?? "nd");
@@ -126,7 +127,7 @@ export default function ChecklistForm({
           Quanto você entende de carro?
         </div>
         <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5, marginBottom: 24 }}>
-          O checklist vai se adaptar pro seu nível.
+          O Pablo vai adaptar a linguagem pra você.
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -148,10 +149,10 @@ export default function ChecklistForm({
             }}>👀</div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 3 }}>
-                Sei pouco — vou olhar o básico
+                Sei pouco de carro
               </div>
               <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
-                Só o que dá pra ver e ouvir. Sem ferramenta, sem levantar o carro.
+                O Pablo vai te guiar com linguagem simples.
               </div>
             </div>
           </button>
@@ -174,10 +175,10 @@ export default function ChecklistForm({
             }}>🔧</div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 3 }}>
-                Entendo de carro — quero o checklist completo
+                Entendo de carro
               </div>
               <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
-                Incluindo itens que precisam de mecânico ou ferramenta.
+                Linguagem técnica, sem simplificar.
               </div>
             </div>
           </button>
@@ -195,9 +196,7 @@ export default function ChecklistForm({
         marginBottom: 20,
       }}>
         <span style={{ fontSize: 12, color: "var(--t3)" }}>
-          {level === "leigo"
-            ? `${filteredIssues.length} itens pra verificar`
-            : `${filteredIssues.length} itens (checklist completo)`}
+          {issues.length} itens · {level === "leigo" ? "linguagem simples" : "linguagem técnica"}
         </span>
         <button
           type="button"
@@ -208,24 +207,9 @@ export default function ChecklistForm({
             textUnderlineOffset: "2px",
           }}
         >
-          Mudar nível
+          Mudar
         </button>
       </div>
-
-      {/* Mechanic notice for leigos */}
-      {level === "leigo" && mechanicOnlyCount > 0 && (
-        <div style={{
-          display: "flex", alignItems: "flex-start", gap: 10,
-          background: "var(--bg2)", border: "1px solid var(--bd)",
-          borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 20,
-        }}>
-          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>🔧</span>
-          <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
-            {mechanicOnlyCount} itens foram removidos porque precisam de mecânico ou ferramenta.
-            Leve o carro numa oficina de confiança pra uma avaliação completa.
-          </div>
-        </div>
-      )}
 
       {Object.entries(grouped).map(([cat, items]) => (
         <div key={cat} style={{ marginBottom: 28 }}>
@@ -243,6 +227,7 @@ export default function ChecklistForm({
             const isOpen = openItems.has(issue.id);
             const hasTip = !!(issue.how_to_check || issue.if_bad);
             const needsMechanic = requiresMechanic(issue);
+            const isMechanicExpanded = mechanicOpen.has(issue.id);
 
             return (
               <div key={issue.id} style={{
@@ -276,17 +261,6 @@ export default function ChecklistForm({
                         </span>
                       )}
                     </div>
-                    {/* Mechanic badge */}
-                    {needsMechanic && (
-                      <div style={{
-                        display: "inline-flex", alignItems: "center", gap: 4,
-                        marginTop: 4, fontSize: 10, fontWeight: 700,
-                        color: "var(--t4)", background: "var(--bg3)",
-                        borderRadius: 99, padding: "2px 8px",
-                      }}>
-                        🔧 Pedir pra mecânico verificar
-                      </div>
-                    )}
                   </div>
                   {hasTip && (
                     <span style={{
@@ -299,6 +273,41 @@ export default function ChecklistForm({
                     </span>
                   )}
                 </div>
+
+                {/* Mechanic badge — clickable dropdown */}
+                {needsMechanic && (
+                  <div style={{ marginLeft: 16, marginBottom: 10 }}>
+                    <button
+                      type="button"
+                      onClick={() => toggleMechanic(issue.id)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 5,
+                        fontSize: 11, fontWeight: 700,
+                        color: "var(--warn)", background: "var(--wg)",
+                        border: "1px solid rgba(245,166,35,0.2)",
+                        borderRadius: 99, padding: "4px 10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      🔧 Precisa de mecânico
+                      <span style={{
+                        fontSize: 10, display: "inline-block",
+                        transform: isMechanicExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform .15s",
+                      }}>▾</span>
+                    </button>
+                    {isMechanicExpanded && (
+                      <div style={{
+                        background: "var(--bg3)", borderRadius: 8, padding: "10px 12px",
+                        marginTop: 8, fontSize: 12, color: "var(--t2)", lineHeight: 1.55,
+                      }}>
+                        Esse item precisa de um mecânico ou ferramenta pra verificar direito.
+                        Se já levou numa oficina, marca <strong style={{ color: "var(--t1)" }}>OK</strong> ou <strong style={{ color: "var(--t1)" }}>Problema</strong>.
+                        Se não verificou, pula — não vai afetar o laudo.
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Inline tip dropdown */}
                 {isOpen && hasTip && (
@@ -381,6 +390,7 @@ export default function ChecklistForm({
         <Chat
           laudoId={laudoId}
           carInfo={carInfo}
+          userLevel={level}
           initialQuestion={helpQuestion}
           checklistState={issues.map((iss) => ({
             id: iss.id,
@@ -396,7 +406,7 @@ export default function ChecklistForm({
         <div style={{ fontSize: 12, color: answered === 0 ? "var(--warn)" : "var(--t3)", marginBottom: 14, textAlign: "center" }}>
           {answered === 0
             ? "Responda ao menos um item antes de continuar"
-            : `${answered} de ${filteredIssues.length} itens verificados`}
+            : `${answered} de ${issues.length} itens verificados`}
           {answered > 0 && problemCount > 0 && (
             <span style={{ color: "var(--danger)", marginLeft: 8 }}>
               · {problemCount} problema{problemCount > 1 ? "s" : ""}
