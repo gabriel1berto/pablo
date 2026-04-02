@@ -35,27 +35,16 @@ export default async function ChecklistPage({
     .order("category")
     .order("sort_order");
 
-  // Any row for this model (sentinel or real items)
-  const { data: anyRow } = await supabase
-    .from("car_issues")
-    .select("id")
-    .ilike("model_pattern", `%${modelKey}%`)
-    .limit(1);
-
   const hasSpecific = (issues ?? []).length > 0;
-  const hasAnyRow = (anyRow ?? []).length > 0;
 
-  // Sentinel-only = pesquisa foi tentada mas não retornou items para este modelo/ano/km
-  const sentinelOnly = !hasSpecific && hasAnyRow;
-
-  // Loader apenas quando nunca pesquisado (sem items e sem sentinel)
-  const needsResearch = !hasSpecific && !sentinelOnly;
-
-  // Fallback para genérico se sentinel-only (pesquisa rodou mas sem resultados)
+  // Se não tem itens específicos, mostra loader (research-loader cuida de não re-pesquisar)
+  // Só mostra genérico como fallback se o modelo for literalmente "Generico"
   let displayIssues = issues ?? [];
   let isGeneric = false;
+  const needsResearch = !hasSpecific;
 
-  if (!needsResearch && !hasSpecific) {
+  if (!hasSpecific) {
+    // Fallback genérico enquanto não tem dados específicos
     const { data: generic } = await supabase
       .from("car_issues")
       .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
@@ -92,18 +81,15 @@ export default async function ChecklistPage({
       </div>
 
       <div style={{ paddingTop: 12 }}>
-        {/* Research loader — triggers re-research for new or stale models */}
-        {needsResearch && (
+        {/* Loader — aparece até ter itens específicos do modelo */}
+        {needsResearch ? (
           <ResearchLoader
             brand={laudo.brand}
             model={laudo.model}
             year={laudo.year}
             km={laudo.km}
           />
-        )}
-
-        {/* Issues encontradas (específicas ou genéricas) */}
-        {!needsResearch && displayIssues.length > 0 && (
+        ) : displayIssues.length > 0 && (
           <>
             <div style={{
               background: isGeneric ? "var(--bg2)" : criticals > 0 ? "var(--dg)" : "var(--wg)",
