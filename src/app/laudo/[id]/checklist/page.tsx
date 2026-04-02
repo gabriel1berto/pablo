@@ -35,28 +35,26 @@ export default async function ChecklistPage({
     .order("category")
     .order("sort_order");
 
-  const hasSpecific = (issues ?? []).length > 0;
-
-  // Se não tem itens específicos, mostra loader (research-loader cuida de não re-pesquisar)
-  // Só mostra genérico como fallback se o modelo for literalmente "Generico"
-  let displayIssues = issues ?? [];
-  let isGeneric = false;
+  const specificIssues = issues ?? [];
+  const hasSpecific = specificIssues.length > 0;
   const needsResearch = !hasSpecific;
 
-  if (!hasSpecific) {
-    // Fallback genérico enquanto não tem dados específicos
-    const { data: generic } = await supabase
-      .from("car_issues")
-      .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
-      .eq("model_pattern", "Generico")
-      .order("category")
-      .order("sort_order");
-    displayIssues = generic ?? [];
-    isGeneric = true;
-  }
+  // Sempre carregar genéricos (verificações padrão de qualquer carro)
+  const { data: generic } = await supabase
+    .from("car_issues")
+    .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
+    .eq("model_pattern", "Generico")
+    .order("category")
+    .order("sort_order");
 
-  const criticals = displayIssues.filter((i) => i.severity === "critical").length;
-  const warns = displayIssues.filter((i) => i.severity === "warn").length;
+  // Juntar: específicos primeiro, depois genéricos (sem duplicar por título)
+  const specificTitles = new Set(specificIssues.map((i) => i.title.toLowerCase()));
+  const uniqueGeneric = (generic ?? []).filter((g) => !specificTitles.has(g.title.toLowerCase()));
+  const displayIssues = [...specificIssues, ...uniqueGeneric];
+
+  const specificCount = specificIssues.length;
+  const criticals = specificIssues.filter((i) => i.severity === "critical").length;
+  const warns = specificIssues.filter((i) => i.severity === "warn").length;
 
   return (
     <main style={{
@@ -91,28 +89,38 @@ export default async function ChecklistPage({
           />
         ) : displayIssues.length > 0 && (
           <>
-            <div style={{
-              background: isGeneric ? "var(--bg2)" : criticals > 0 ? "var(--dg)" : "var(--wg)",
-              border: `1px solid ${isGeneric ? "var(--bd)" : criticals > 0 ? "rgba(255,68,68,0.2)" : "rgba(245,166,35,0.2)"}`,
-              borderRadius: "var(--rm)", padding: "12px 16px", marginBottom: 16,
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4,
-                color: isGeneric ? "var(--t2)" : criticals > 0 ? "var(--danger)" : "var(--warn)" }}>
-                {isGeneric
-                  ? `Inspeção geral — ${displayIssues.length} itens`
-                  : criticals > 0
+            {specificCount > 0 && (
+              <div style={{
+                background: criticals > 0 ? "var(--dg)" : "var(--wg)",
+                border: `1px solid ${criticals > 0 ? "rgba(255,68,68,0.2)" : "rgba(245,166,35,0.2)"}`,
+                borderRadius: "var(--rm)", padding: "12px 16px", marginBottom: 10,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4,
+                  color: criticals > 0 ? "var(--danger)" : "var(--warn)" }}>
+                  {criticals > 0
                     ? `⚠ ${criticals} ponto${criticals > 1 ? "s" : ""} crítico${criticals > 1 ? "s" : ""} conhecido${criticals > 1 ? "s" : ""} do ${laudo.model}`
                     : `${warns} ponto${warns > 1 ? "s" : ""} de atenção para o ${laudo.model}`}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>
+                  Problemas documentados para {laudo.km.toLocaleString("pt-BR")} km + verificação padrão ({displayIssues.length} itens no total).
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>
-                {isGeneric
-                  ? "Modelo fora da base. Checklist padrão para qualquer carro usado."
-                  : `Problemas reais documentados para ${laudo.km.toLocaleString("pt-BR")} km.`}
-                {" "}{laudo.tipo === "vendedor"
-                  ? <>Preencha com honestidade o estado real do seu carro. Marque <strong>OK</strong> ou <strong>Problema</strong>.</>
-                  : <>Marque <strong>OK</strong> ou <strong>Problema</strong> em cada item.</>}
+            )}
+            {specificCount === 0 && (
+              <div style={{
+                background: "var(--bg2)", border: "1px solid var(--bd)",
+                borderRadius: "var(--rm)", padding: "12px 16px", marginBottom: 10,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, color: "var(--t2)" }}>
+                  Verificação padrão — {displayIssues.length} itens
+                </div>
+                <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>
+                  {laudo.tipo === "vendedor"
+                    ? <>Preencha o estado real do carro. Marque <strong>OK</strong> ou <strong>Problema</strong>.</>
+                    : <>Marque <strong>OK</strong> ou <strong>Problema</strong> em cada item.</>}
+                </div>
               </div>
-            </div>
+            )}
             <ChecklistForm laudoId={id} issues={displayIssues} carInfo={{ brand: laudo.brand, model: laudo.model, year: laudo.year, km: laudo.km }} />
           </>
         )}
