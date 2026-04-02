@@ -5,14 +5,14 @@ import { useState, useEffect } from "react";
 import TrialChat from "./components/trial-chat";
 
 const CILADAS = [
-  { car: "Civic 2019", problem: "Motor já tinha sido retificado", loss: "R$ 8.000 jogados fora" },
-  { car: "HB20 2020", problem: "Era de leilão e o cara escondeu", loss: "R$ 12.000 de prejuízo" },
-  { car: "Corolla 2018", problem: "Câmbio dando tranco na 3a", loss: "R$ 6.500 pra consertar" },
-  { car: "Onix 2017", problem: "Tinha sido batido e repintado", loss: "R$ 4.200 perdidos" },
-  { car: "Gol 2016", problem: "Ainda tinha gravame no banco", loss: "Perdeu o carro" },
-  { car: "Argo 2021", problem: "KM rodado tava adulterado", loss: "R$ 5.000 no lixo" },
-  { car: "Kicks 2020", problem: "Tinha pegado enchente", loss: "R$ 9.000 de dor de cabeça" },
-  { car: "Strada 2019", problem: "Chassi remarcado, doc falso", loss: "Perdeu tudo" },
+  { car: "Civic 2019", problem: "Motor já tinha sido retificado", loss: "Prejuízo de R$ 8.000" },
+  { car: "HB20 2020", problem: "Veículo de leilão, vendedor omitiu", loss: "Prejuízo de R$ 12.000" },
+  { car: "Corolla 2018", problem: "Câmbio com tranco na terceira", loss: "R$ 6.500 em reparo" },
+  { car: "Onix 2017", problem: "Batido e repintado sem declarar", loss: "R$ 4.200 de desvalorização" },
+  { car: "Gol 2016", problem: "Gravame ativo no banco", loss: "Carro retomado" },
+  { car: "Argo 2021", problem: "Hodômetro adulterado", loss: "R$ 5.000 em manutenção" },
+  { car: "Kicks 2020", problem: "Tinha pego enchente", loss: "R$ 9.000 em problemas elétricos" },
+  { car: "Strada 2019", problem: "Chassi remarcado, documentação falsa", loss: "Perda total" },
 ];
 
 export default function LP() {
@@ -58,15 +58,16 @@ export default function LP() {
           fontSize: 30, fontWeight: 900, letterSpacing: "-1px",
           lineHeight: 1.15, marginBottom: 0, color: "var(--t1)",
         }}>
-          Vai comprar carro usado?<br />
-          <span style={{ color: "var(--accent)" }}>Deixa eu te ajudar.</span>
+          Sabe aquele carro que<br />
+          <span style={{ color: "var(--accent)" }}>parece perfeito?</span>
         </h1>
-        <h2 style={{
-          fontSize: 20, fontWeight: 700, letterSpacing: "-0.5px",
-          lineHeight: 1.3, marginTop: 12, color: "var(--t3)",
+        <p style={{
+          fontSize: 15, fontWeight: 500, letterSpacing: "-0.2px",
+          lineHeight: 1.5, marginTop: 14, color: "var(--t3)",
         }}>
-          Vende carro? Mostra que ele vale o preço.
-        </h2>
+          O Pablo te ajuda a descobrir o que tem de errado antes de você pagar.
+          E se você vende, mostra que o carro é confiável.
+        </p>
       </div>
 
       {/* ── Stats strip ───────────────────────────────── */}
@@ -76,16 +77,16 @@ export default function LP() {
         overflow: "hidden", marginBottom: 24,
       }}>
         <div style={{ background: "var(--bg2)", padding: "18px 8px", textAlign: "center" }}>
-          <div style={{ fontSize: 22, fontWeight: 900, color: "var(--accent)", lineHeight: 1 }}>R$ 0</div>
-          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>no primeiro</div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: "var(--accent)", lineHeight: 1 }}>Grátis</div>
+          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>primeiro laudo</div>
         </div>
         <div style={{ background: "var(--bg2)", padding: "18px 8px", textAlign: "center" }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: "var(--t1)", lineHeight: 1 }}>8 min</div>
-          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>e tu termina</div>
+          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>pra fazer</div>
         </div>
         <div style={{ background: "var(--bg2)", padding: "18px 8px", textAlign: "center" }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: "var(--t1)", lineHeight: 1 }}>R$ 20</div>
-          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>os próximos</div>
+          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>a partir do segundo</div>
         </div>
       </div>
 
@@ -101,7 +102,7 @@ export default function LP() {
           marginBottom: 32,
         }}
       >
-        Faz um teste de boa
+        Fazer meu primeiro laudo
       </Link>
 
       {/* ── Trial chat ────────────────────────────────── */}
@@ -116,7 +117,7 @@ export default function LP() {
           textTransform: "uppercase", letterSpacing: "1px",
           marginBottom: 16,
         }}>
-          Gente que se ferrou
+          Casos reais
         </div>
 
         <div style={{
@@ -159,8 +160,8 @@ export default function LP() {
         }}>
           <img src="/icon-pablo.png" alt="P" style={{ width: 32, height: 32, borderRadius: "50%" }} />
           <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--t1)" }}>Pablo</div>
-            <div style={{ fontSize: 12, color: "var(--t3)" }}>Manja de carro e te fala a real</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--t1)" }}>Converse com o Pablo</div>
+            <div style={{ fontSize: 12, color: "var(--t3)" }}>Seu mecânico de confiança dentro do app</div>
           </div>
         </div>
 
@@ -182,7 +183,7 @@ export default function LP() {
                 <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.15)", marginBottom: 3 }} />
                 <span style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", fontWeight: 600 }}>foto do motor</span>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>Mano, isso aqui tá certo?</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>Esse óleo aqui é problema?</div>
             </div>
           </div>
 
@@ -192,7 +193,7 @@ export default function LP() {
               borderRadius: "14px 14px 14px 4px", padding: "10px 14px", maxWidth: "85%",
             }}>
               <div style={{ fontSize: 13, lineHeight: 1.6 }}>
-                Esse óleo ali na tampa de válvulas? No Onix com 45 mil km <strong style={{ color: "var(--warn)" }}>até aparece, mas não deveria</strong>. Trocar a junta sai uns <strong style={{ color: "var(--t2)" }}>R$ 150 a 250</strong>.
+                Tá vazando pela junta da tampa de válvulas. No Onix com 45 mil km <strong style={{ color: "var(--warn)" }}>é comum aparecer, mas precisa trocar</strong>. A junta sai entre <strong style={{ color: "var(--t2)" }}>R$ 150 e 250</strong>.
               </div>
             </div>
           </div>
@@ -202,7 +203,7 @@ export default function LP() {
               background: "var(--accent)", color: "#050505",
               borderRadius: "14px 14px 4px 14px", padding: "10px 14px", maxWidth: "78%",
             }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>O dono tá pedindo 42, pago?</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>O dono pede 42 mil, vale a pena?</div>
             </div>
           </div>
 
@@ -212,7 +213,7 @@ export default function LP() {
               borderRadius: "14px 14px 14px 4px", padding: "10px 14px", maxWidth: "85%",
             }}>
               <div style={{ fontSize: 13, lineHeight: 1.6 }}>
-                FIPE dele tá 43.800. Com esse vazamento e os pneus, oferece <strong style={{ color: "var(--accent)" }}>40.500</strong>. Tu paga justo e ainda sobra pra arrumar.
+                A FIPE desse modelo tá em R$ 43.800. Com o vazamento e os pneus gastos, o justo seria <strong style={{ color: "var(--accent)" }}>R$ 40.500</strong>. Você paga o valor certo e sobra pra resolver os dois pontos.
               </div>
             </div>
           </div>
@@ -225,7 +226,7 @@ export default function LP() {
           fontSize: 10, fontWeight: 800, color: "var(--t4)",
           textTransform: "uppercase", letterSpacing: "1px", marginBottom: 14,
         }}>
-          O que sai no laudo
+          Exemplo de laudo
         </div>
 
         <div style={{
@@ -233,7 +234,7 @@ export default function LP() {
           borderRadius: "var(--rm)", overflow: "hidden",
         }}>
           <div style={{ padding: "14px 16px 0", display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 12, color: "var(--t3)" }}>Onix 2017 · 45 mil km</span>
+            <span style={{ fontSize: 12, color: "var(--t3)" }}>Onix 2017 · 45.000 km</span>
           </div>
 
           <div style={{
@@ -241,7 +242,7 @@ export default function LP() {
             borderRadius: "var(--rm)", margin: 12, padding: "16px 14px", textAlign: "center",
           }}>
             <div style={{ fontSize: 24, fontWeight: 900, color: "var(--warn)", textTransform: "uppercase", lineHeight: 1.1, marginBottom: 6 }}>
-              Dá pra comprar, mas fica esperto
+              Compra com cautela
             </div>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 3 }}>
               <span style={{ fontSize: 32, fontWeight: 900, color: "var(--warn)", letterSpacing: "-1px", lineHeight: 1 }}>6.3</span>
@@ -254,8 +255,8 @@ export default function LP() {
               background: "rgba(255,68,68,0.04)", border: "1px solid rgba(255,68,68,0.12)",
               borderRadius: 12, padding: "10px 12px", marginBottom: 8,
             }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 2 }}>Nenhum comprovante de revisão</div>
-              <div style={{ fontSize: 12, color: "var(--t3)" }}>Dono não tem nada pra mostrar</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--danger)", marginBottom: 2 }}>Sem comprovante de revisão</div>
+              <div style={{ fontSize: 12, color: "var(--t3)" }}>Vendedor não apresentou registro de manutenção</div>
             </div>
 
             <div style={{
@@ -263,7 +264,7 @@ export default function LP() {
               borderRadius: 12, padding: "10px 12px", marginBottom: 8,
             }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Junta vazando óleo</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Vazamento na junta</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--t3)" }}>R$ 150–250</span>
               </div>
             </div>
@@ -273,7 +274,7 @@ export default function LP() {
               borderRadius: 12, padding: "10px 12px", marginBottom: 12,
             }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Pneu careca na borda</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Pneus gastos na borda</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--t3)" }}>R$ 500–800</span>
               </div>
             </div>
@@ -291,7 +292,7 @@ export default function LP() {
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>1</div>
               <div style={{ fontSize: 12, color: "var(--t2)", lineHeight: 1.5 }}>
-                Oferece 40.500 em vez dos 42. Desconta o reparo e paga o justo.
+                Ofereça R$ 40.500 em vez de R$ 42.000. O desconto cobre os reparos.
               </div>
             </div>
           </div>
@@ -311,8 +312,8 @@ export default function LP() {
         }}
       >
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Quer ver como fica?</div>
-          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>Esse aqui é de um Onix 2017 real</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Veja um laudo real</div>
+          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>Onix 2017 — resultado completo</div>
         </div>
         <span style={{ fontSize: 14, color: "var(--t3)" }}>→</span>
       </Link>
@@ -332,8 +333,8 @@ export default function LP() {
           <span style={{ color: "var(--accent)", fontSize: 18, fontWeight: 900 }}>✓</span>
         </div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>Achou ruim? Devolvo teu dinheiro</div>
-          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>Pix de volta em 24h, sem enrolação.</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>Não ficou satisfeito? Devolvemos o valor</div>
+          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>Pix de volta em 24h, sem burocracia.</div>
         </div>
       </div>
 
@@ -346,18 +347,18 @@ export default function LP() {
           background: "var(--bg2)", border: "1px solid var(--bd)",
           borderRadius: "var(--rm)", padding: "16px 14px", textDecoration: "none",
         }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", marginBottom: 6 }}>Tá comprando?</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", marginBottom: 6 }}>Vai comprar?</div>
           <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
-            Descobre os problemas antes de pagar
+            Saiba o que tem de errado antes de fechar negócio
           </div>
         </Link>
         <Link href="/cadastro" style={{
           background: "var(--bg2)", border: "1px solid var(--bd)",
           borderRadius: "var(--rm)", padding: "16px 14px", textDecoration: "none",
         }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#A78BFA", marginBottom: 6 }}>Tá vendendo?</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#A78BFA", marginBottom: 6 }}>Vai vender?</div>
           <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
-            Prova pro comprador que tá tudo certo
+            Mostre pro comprador que o carro é confiável
           </div>
         </Link>
       </div>
@@ -373,7 +374,7 @@ export default function LP() {
             textDecoration: "none",
           }}
         >
-          Bora testar
+          Começar agora
         </Link>
       </div>
     </main>

@@ -111,10 +111,10 @@ export default function TrialChat() {
         <img src="/icon-pablo.png" alt="P" style={{ width: 36, height: 36, borderRadius: "50%" }} />
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>
-            Pergunta algo pro Pablo
+            Faça uma pergunta para o Pablo
           </div>
           <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>
-            Sobre qualquer carro. Sem conta, sem pagar nada
+            Sobre qualquer carro. Sem criar conta.
           </div>
         </div>
       </button>
@@ -130,10 +130,10 @@ export default function TrialChat() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <img src="/icon-pablo.png" alt="P" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>Manda sua dúvida</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>Fale com o Pablo</div>
         </div>
         <div style={{ fontSize: 13, color: "var(--t2)", lineHeight: 1.6, marginBottom: 16 }}>
-          Deixa teu e-mail e pergunta o que quiser. Pode ser sobre um carro que tu tá de olho, um barulho esquisito, manda foto de uma peça -- o que for.
+          Coloque seu e-mail e faça uma pergunta. Pode ser sobre um carro que você está olhando, um barulho, ou mande a foto de uma peça.
         </div>
         <form onSubmit={handleEmailSubmit} style={{ display: "flex", gap: 8 }}>
           <input
@@ -156,7 +156,7 @@ export default function TrialChat() {
               cursor: "pointer", flexShrink: 0,
             }}
           >
-            Vai
+            Enviar
           </button>
         </form>
       </div>
@@ -187,7 +187,7 @@ export default function TrialChat() {
               borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
               maxWidth: "90%", fontSize: 13, lineHeight: 1.6,
             }}>
-              Fala aí, qual carro tu tá vendo? Me diz marca, modelo, ano e km. Pode mandar foto também se quiser. Manda que eu dou uma olhada.
+              Me conta: qual carro você está olhando? Marca, modelo, ano e km. Pode mandar foto também. Uma pergunta e eu mostro como posso ajudar.
             </div>
           </div>
 
@@ -231,7 +231,7 @@ export default function TrialChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder="Escreve aqui..."
+              placeholder="Sua pergunta..."
               rows={1}
               style={inputStyle}
             />
@@ -301,7 +301,7 @@ export default function TrialChat() {
           borderRadius: 12, padding: "14px 16px", textAlign: "center",
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)", marginBottom: 6 }}>
-            Isso foi só uma pergunta. No laudo ele checa o carro inteiro.
+            Essa foi só uma amostra. No laudo completo, o Pablo analisa o carro inteiro.
           </div>
           <Link
             href="/cadastro"
@@ -312,7 +312,7 @@ export default function TrialChat() {
               marginTop: 4,
             }}
           >
-            Quero fazer um laudo
+            Fazer meu laudo
           </Link>
         </div>
       </div>
