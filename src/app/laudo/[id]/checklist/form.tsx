@@ -17,6 +17,7 @@ type Issue = {
 };
 
 type State = "ok" | "problema";
+type Level = "leigo" | "preparado" | null;
 
 const CAT_LABEL: Record<string, string> = {
   motor: "Motor",
@@ -37,10 +38,11 @@ const SEV: Record<string, { color: string; label: string }> = {
 const MECHANIC_KEYWORDS = [
   "elevador", "desmontag", "oficina", "mecânico", "mecanic",
   "técnico", "técnica", "perito", "escâner", "scanner", "diagnóstico", "diagnos",
+  "compressão", "torquímetro", "multímetro", "osciloscópio",
 ];
 
 function requiresMechanic(issue: Issue): boolean {
-  const text = [(issue.how_to_check ?? ""), (issue.if_bad ?? "")].join(" ").toLowerCase();
+  const text = [(issue.how_to_check ?? ""), (issue.if_bad ?? ""), (issue.description ?? "")].join(" ").toLowerCase();
   return MECHANIC_KEYWORDS.some((k) => text.includes(k));
 }
 
@@ -53,6 +55,7 @@ export default function ChecklistForm({
   issues: Issue[];
   carInfo: { brand: string; model: string; year: number; km: number };
 }) {
+  const [level, setLevel] = useState<Level>(null);
   const [states, setStates] = useState<Record<number, State>>({});
   const [openItems, setOpenItems] = useState<Set<number>>(() => {
     const open = new Set<number>();
@@ -80,10 +83,17 @@ export default function ChecklistForm({
       return next;
     });
 
-  const grouped = issues.reduce<Record<string, Issue[]>>((acc, issue) => {
+  // Filter issues based on level
+  const filteredIssues = level === "leigo"
+    ? issues.filter((i) => !requiresMechanic(i))
+    : issues;
+
+  const grouped = filteredIssues.reduce<Record<string, Issue[]>>((acc, issue) => {
     (acc[issue.category] ??= []).push(issue);
     return acc;
   }, {});
+
+  const mechanicOnlyCount = issues.filter((i) => requiresMechanic(i)).length;
 
   const answered = Object.keys(states).length;
   const problemCount = Object.values(states).filter((s) => s === "problema").length;
@@ -93,6 +103,7 @@ export default function ChecklistForm({
     setErro("");
     setLoading(true);
     const fd = new FormData();
+    // Submit ALL issues (including filtered ones as "nd")
     issues.forEach((issue) => {
       fd.append("item_id", String(issue.id));
       fd.append(`item_state_${issue.id}`, states[issue.id] ?? "nd");
@@ -102,11 +113,120 @@ export default function ChecklistForm({
       setErro(result.error);
       setLoading(false);
     }
-    // On success salvarChecklist redirects server-side — no client handling needed
   }
 
+  // ── Level selector ─────────────────────────────────
+  if (level === null) {
+    return (
+      <div style={{ paddingTop: 16, paddingBottom: 48 }}>
+        <div style={{
+          fontSize: 18, fontWeight: 800, color: "var(--t1)",
+          marginBottom: 6, letterSpacing: "-0.3px",
+        }}>
+          Quanto você entende de carro?
+        </div>
+        <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5, marginBottom: 24 }}>
+          O checklist vai se adaptar pro seu nível.
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => setLevel("leigo")}
+            style={{
+              display: "flex", alignItems: "flex-start", gap: 14,
+              background: "var(--bg2)", border: "1px solid var(--bd)",
+              borderRadius: "var(--rm)", padding: "16px",
+              cursor: "pointer", textAlign: "left",
+            }}
+          >
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "var(--ag)", color: "var(--accent)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, flexShrink: 0,
+            }}>👀</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 3 }}>
+                Sei pouco — vou olhar o básico
+              </div>
+              <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
+                Só o que dá pra ver e ouvir. Sem ferramenta, sem levantar o carro.
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLevel("preparado")}
+            style={{
+              display: "flex", alignItems: "flex-start", gap: 14,
+              background: "var(--bg2)", border: "1px solid var(--bd)",
+              borderRadius: "var(--rm)", padding: "16px",
+              cursor: "pointer", textAlign: "left",
+            }}
+          >
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "var(--bg3)", color: "var(--t2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, flexShrink: 0,
+            }}>🔧</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", marginBottom: 3 }}>
+                Entendo de carro — quero o checklist completo
+              </div>
+              <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
+                Incluindo itens que precisam de mecânico ou ferramenta.
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Checklist form ─────────────────────────────────
   return (
     <form onSubmit={handleSubmit}>
+      {/* Level indicator */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: 20,
+      }}>
+        <span style={{ fontSize: 12, color: "var(--t3)" }}>
+          {level === "leigo"
+            ? `${filteredIssues.length} itens pra verificar`
+            : `${filteredIssues.length} itens (checklist completo)`}
+        </span>
+        <button
+          type="button"
+          onClick={() => setLevel(null)}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            fontSize: 11, color: "var(--t4)", textDecoration: "underline",
+            textUnderlineOffset: "2px",
+          }}
+        >
+          Mudar nível
+        </button>
+      </div>
+
+      {/* Mechanic notice for leigos */}
+      {level === "leigo" && mechanicOnlyCount > 0 && (
+        <div style={{
+          display: "flex", alignItems: "flex-start", gap: 10,
+          background: "var(--bg2)", border: "1px solid var(--bd)",
+          borderRadius: "var(--rm)", padding: "12px 14px", marginBottom: 20,
+        }}>
+          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>🔧</span>
+          <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
+            {mechanicOnlyCount} itens foram removidos porque precisam de mecânico ou ferramenta.
+            Leve o carro numa oficina de confiança pra uma avaliação completa.
+          </div>
+        </div>
+      )}
+
       {Object.entries(grouped).map(([cat, items]) => (
         <div key={cat} style={{ marginBottom: 28 }}>
           <div style={{
@@ -129,7 +249,7 @@ export default function ChecklistForm({
                 padding: "14px 0",
                 borderBottom: "1px solid rgba(255,255,255,0.04)",
               }}>
-                {/* Title row — click to expand tip */}
+                {/* Title row */}
                 <div
                   onClick={() => hasTip && toggleOpen(issue.id)}
                   style={{
@@ -155,15 +275,18 @@ export default function ChecklistForm({
                           {sev.label}
                         </span>
                       )}
-                      {needsMechanic && (
-                        <span
-                          title="Requer inspeção de mecânico"
-                          style={{ marginLeft: 6, fontSize: 11 }}
-                        >
-                          🔧
-                        </span>
-                      )}
                     </div>
+                    {/* Mechanic badge */}
+                    {needsMechanic && (
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 4,
+                        marginTop: 4, fontSize: 10, fontWeight: 700,
+                        color: "var(--t4)", background: "var(--bg3)",
+                        borderRadius: 99, padding: "2px 8px",
+                      }}>
+                        🔧 Pedir pra mecânico verificar
+                      </div>
+                    )}
                   </div>
                   {hasTip && (
                     <span style={{
@@ -273,7 +396,7 @@ export default function ChecklistForm({
         <div style={{ fontSize: 12, color: answered === 0 ? "var(--warn)" : "var(--t3)", marginBottom: 14, textAlign: "center" }}>
           {answered === 0
             ? "Responda ao menos um item antes de continuar"
-            : `${answered} de ${issues.length} itens verificados`}
+            : `${answered} de ${filteredIssues.length} itens verificados`}
           {answered > 0 && problemCount > 0 && (
             <span style={{ color: "var(--danger)", marginLeft: 8 }}>
               · {problemCount} problema{problemCount > 1 ? "s" : ""}
