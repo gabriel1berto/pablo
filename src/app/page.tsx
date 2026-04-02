@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import TrialChat from "./components/trial-chat";
 
 const CILADAS = [
   { car: "Civic 2019", problem: "Motor retificado", loss: "R$ 8.000" },
@@ -97,11 +98,16 @@ export default function LP() {
           borderRadius: "var(--rs)", fontSize: 15, fontWeight: 800,
           textDecoration: "none",
           boxShadow: "0 2px 16px rgba(0,212,170,0.18), 0 1px 3px rgba(0,0,0,0.3)",
-          marginBottom: 48,
+          marginBottom: 32,
         }}
       >
         Avaliar um carro grátis
       </Link>
+
+      {/* ── Trial chat ────────────────────────────────── */}
+      <div style={{ marginBottom: 48 }}>
+        <TrialChat />
+      </div>
 
       {/* ── Ciladas ───────────────────────────────────── */}
       <div style={{ marginBottom: 48 }}>
