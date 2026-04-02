@@ -334,6 +334,9 @@ export default function Chat({
               }}>
                 <div style={{ fontSize: 14, lineHeight: 1.65 }}>
                   {(() => {
+                    if (initialQuestion) {
+                      return `Tira uma foto dessa parte do carro e manda aqui — consigo te dar um diagnóstico visual. Ou aperta ↑ pra mandar a pergunta.`;
+                    }
                     const p = problems.length;
                     const a = answered.length;
                     const total = checklistState.length;
