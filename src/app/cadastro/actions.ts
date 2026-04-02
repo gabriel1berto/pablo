@@ -31,6 +31,7 @@ export async function signUp(formData: FormData) {
   const email = formData.get("email") as string;
   const name = formData.get("name") as string;
   const password = formData.get("password") as string;
+  const whatsapp = (formData.get("whatsapp") as string)?.replace(/\D/g, "") || "";
 
   if (!email) return { error: "Preencha o e-mail." };
   if (!name?.trim()) return { error: "Preencha o nome." };
@@ -40,7 +41,7 @@ export async function signUp(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name } },
+    options: { data: { name, whatsapp } },
   });
 
   if (error) {

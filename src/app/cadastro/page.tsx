@@ -83,6 +83,10 @@ export default function Cadastro() {
           <input name="email" type="email" placeholder="seu@email.com" required style={inputStyle} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)" }}>WhatsApp</label>
+          <input name="whatsapp" type="tel" placeholder="(11) 99999-9999" style={inputStyle} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)" }}>Senha</label>
           <input name="password" type="password" placeholder="Mínimo 6 caracteres" required minLength={6} style={inputStyle} />
         </div>

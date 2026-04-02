@@ -37,9 +37,18 @@ export default function LP() {
       maxWidth: 480, margin: "0 auto", padding: "0 24px",
     }}>
 
-      {/* ── Logo ──────────────────────────────────────── */}
-      <div style={{ paddingTop: 48 }}>
+      {/* ── Logo + Login ────────────────────────────── */}
+      <div style={{ paddingTop: 48, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 56, display: "block" }} />
+        <Link
+          href="/login"
+          style={{
+            fontSize: 13, fontWeight: 700, color: "var(--t3)",
+            textDecoration: "none", padding: "8px 0",
+          }}
+        >
+          Entrar
+        </Link>
       </div>
 
       {/* ── Hero ──────────────────────────────────────── */}

@@ -67,6 +67,7 @@ export default function ChecklistForm({
   });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [helpQuestion, setHelpQuestion] = useState<string | null>(null);
 
   const getState = (id: number): State | null => states[id] ?? null;
   const setState = (id: number, s: State) =>
@@ -202,8 +203,8 @@ export default function ChecklistForm({
                   </div>
                 )}
 
-                {/* OK / Problema buttons */}
-                <div style={{ display: "flex", gap: 8, marginLeft: 16 }}>
+                {/* OK / Problema / Ajuda buttons */}
+                <div style={{ display: "flex", gap: 6, marginLeft: 16 }}>
                   <button
                     type="button"
                     onClick={() => setState(issue.id, "ok")}
@@ -232,6 +233,19 @@ export default function ChecklistForm({
                   >
                     ✗ Problema
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setHelpQuestion(`Como verifico "${issue.title.toLowerCase()}" no ${carInfo.model}?`)}
+                    style={{
+                      flex: "0 0 auto", height: 36, fontSize: 11, fontWeight: 700,
+                      border: "1px solid var(--bg4)",
+                      borderRadius: 8, cursor: "pointer",
+                      background: "var(--bg3)", color: "var(--accent)",
+                      transition: "all .12s", padding: "0 10px",
+                    }}
+                  >
+                    Ajuda
+                  </button>
                 </div>
               </div>
             );
@@ -244,6 +258,7 @@ export default function ChecklistForm({
         <Chat
           laudoId={laudoId}
           carInfo={carInfo}
+          initialQuestion={helpQuestion}
           checklistState={issues.map((iss) => ({
             id: iss.id,
             title: iss.title,

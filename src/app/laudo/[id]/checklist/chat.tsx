@@ -47,14 +47,17 @@ export default function Chat({
   laudoId,
   checklistState,
   carInfo,
+  initialQuestion,
 }: {
   laudoId: string;
   checklistState: ChecklistState[];
   carInfo: { brand: string; model: string; year: number; km: number };
+  initialQuestion?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [processedQuestion, setProcessedQuestion] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -70,6 +73,15 @@ export default function Chat({
   }, []);
 
   useEffect(() => { scrollToBottom(); }, [messages, streaming, scrollToBottom]);
+
+  // Open chat with pre-filled question from checklist "Ajuda" button
+  useEffect(() => {
+    if (initialQuestion && initialQuestion !== processedQuestion) {
+      setProcessedQuestion(initialQuestion);
+      setInput(initialQuestion);
+      setOpen(true);
+    }
+  }, [initialQuestion, processedQuestion]);
 
   useEffect(() => {
     if (open) {

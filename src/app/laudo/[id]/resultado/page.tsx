@@ -50,7 +50,8 @@ function buildHeroContext(
   isVendedor: boolean,
   findings: Finding[],
   cautelarAlerts: CautelarAlert[],
-  diffPct: number
+  diffPct: number,
+  coverage: number
 ): string {
   if (isVendedor) {
     const probs = findings.filter((f) => f.severity !== "ok").length;
@@ -58,13 +59,19 @@ function buildHeroContext(
     return "Nenhum problema declarado";
   }
   const parts: string[] = [];
-  if (cautelarAlerts.length > 0)
+  // Redflags documentais
+  const hasGravame = cautelarAlerts.some((a) => a.key === "gravame");
+  const hasSinistro = cautelarAlerts.some((a) => a.key === "sinistro");
+  if (hasGravame) parts.push("GRAVAME ATIVO — não feche sem quitação");
+  else if (hasSinistro) parts.push("SINISTRO — verifique estrutura");
+  else if (cautelarAlerts.length > 0)
     parts.push(`${cautelarAlerts.length} alerta${cautelarAlerts.length > 1 ? "s" : ""} documental${cautelarAlerts.length > 1 ? "is" : ""}`);
   const criticals = findings.filter((f) => f.severity === "critical").length;
   const warns = findings.filter((f) => f.severity === "warn").length;
   if (criticals > 0) parts.push(`${criticals} crítico${criticals > 1 ? "s" : ""}`);
   else if (warns > 0) parts.push(`${warns} atenção`);
   if (diffPct > 10) parts.push(`preço ${diffPct.toFixed(0)}% acima da FIPE`);
+  if (coverage < 0.5 && coverage > 0) parts.push("checklist incompleto");
   if (parts.length === 0) return "Nenhum problema identificado";
   return parts.join(" · ");
 }
@@ -255,6 +262,16 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
     }
   }
 
+  // Penalizar cobertura baixa (menos de 50% respondido)
+  const totalItems = (issues ?? []).length;
+  const answeredItems = checklistItems.filter((i) => i.notes === "ok" || i.notes === "problema").length;
+  const coverage = totalItems > 0 ? answeredItems / totalItems : 0;
+  if (coverage < 0.5 && answeredItems > 0) {
+    score -= 1.5;
+  } else if (coverage < 0.75 && answeredItems > 0) {
+    score -= 0.5;
+  }
+
   score = Math.round(Math.max(0, Math.min(10, score)) * 10) / 10;
   if (isNaN(score)) score = 10;
 
@@ -276,7 +293,7 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
   });
 
   const problemFindings = findings.filter((f) => f.severity !== "ok");
-  const heroContext = buildHeroContext(isVendedor, problemFindings, cautelarAlerts, diffPct);
+  const heroContext = buildHeroContext(isVendedor, problemFindings, cautelarAlerts, diffPct, coverage);
   const steps = buildSteps(isVendedor, cautelarAlerts, problemFindings, diffPct);
 
   const groups: Record<string, typeof findings> = {};

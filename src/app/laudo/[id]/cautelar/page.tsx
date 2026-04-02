@@ -51,7 +51,7 @@ export default async function CautelarPage({
           <div style={{ width: "60%", height: "100%", background: "var(--accent)", borderRadius: 99 }} />
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 4 }}>
-          Cautelar
+          Documentação
         </h1>
         <p style={{ fontSize: 14, color: "var(--t2)" }}>
           {laudo.brand} {laudo.model} {laudo.year} · {laudo.km.toLocaleString("pt-BR")} km
