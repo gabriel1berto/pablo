@@ -278,6 +278,22 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
   const v = verdict(score);
   const isVendedor = laudo.tipo === "vendedor";
 
+  // Transparency score for seller laudos
+  const transparencyAnswered = checklistItems.filter((i) => i.notes === "ok" || i.notes === "problema").length;
+  const transparencyTotal = (issues ?? []).length;
+  const transparencyPct = transparencyTotal > 0 ? Math.round((transparencyAnswered / transparencyTotal) * 100) : 0;
+
+  // Unverified items for seller laudos
+  const unverifiedItems = (issues ?? []).filter((issue) => {
+    const item = checklistItems.find((i) => i.item_key === String(issue.id));
+    return !item || item.notes === "nd";
+  });
+
+  // Validity date for seller laudos (created_at + 30 days)
+  const validUntil = new Date(laudo.created_at);
+  validUntil.setDate(validUntil.getDate() + 30);
+  const isExpired = new Date() > validUntil;
+
   const hasAnswers = checklistItems.some((i) => i.notes === "ok" || i.notes === "problema");
   if (hasAnswers) {
     const { error: persistError } = await supabase
@@ -326,6 +342,17 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
         <div style={{ fontSize: 11, color: "var(--t4)", letterSpacing: "0.3px" }}>
           Laudo · {fmtDate(laudo.created_at)} · {laudo.brand} {laudo.model} {laudo.year} · {laudo.km.toLocaleString("pt-BR")} km
         </div>
+        {isVendedor && (
+          <div style={{
+            fontSize: 11, marginTop: 6,
+            color: isExpired ? "var(--danger)" : "var(--t3)",
+            fontWeight: isExpired ? 700 : 400,
+          }}>
+            {isExpired
+              ? "Laudo vencido \u2014 atualize para manter a credibilidade"
+              : `V\u00e1lido at\u00e9 ${fmtDate(validUntil.toISOString())}`}
+          </div>
+        )}
       </div>
 
       {/* Hero — verdict dominant */}
@@ -341,24 +368,48 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
           fontSize: 11, fontWeight: 800, color: "var(--t4)",
           textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12,
         }}>
-          {isVendedor ? "Laudo de transparência" : "Avaliação Pablo"}
+          {isVendedor ? "Laudo de transpar\u00eancia" : "Avalia\u00e7\u00e3o Pablo"}
         </div>
-        <div style={{
-          fontSize: 34, fontWeight: 900, color: v.color,
-          letterSpacing: "-0.5px", textTransform: "uppercase", lineHeight: 1.1,
-          marginBottom: 10,
-        }}>
-          {v.label}
-        </div>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4, marginBottom: 12 }}>
-          <span style={{ fontSize: 48, fontWeight: 900, color: v.color, letterSpacing: "-2px", lineHeight: 1 }}>
-            {score.toFixed(1)}
-          </span>
-          <span style={{ fontSize: 18, color: "var(--t3)", fontWeight: 400 }}>/10</span>
-        </div>
-        <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5 }}>
-          {heroContext}
-        </div>
+        {isVendedor ? (
+          <>
+            <div style={{
+              fontSize: 34, fontWeight: 900,
+              color: transparencyPct >= 80 ? "var(--ok)" : transparencyPct >= 50 ? "var(--warn)" : "var(--danger)",
+              letterSpacing: "-0.5px", textTransform: "uppercase", lineHeight: 1.1,
+              marginBottom: 10,
+            }}>
+              Transpar\u00eancia: {transparencyPct}%
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4, marginBottom: 12 }}>
+              <span style={{ fontSize: 48, fontWeight: 900, color: v.color, letterSpacing: "-2px", lineHeight: 1 }}>
+                {score.toFixed(1)}
+              </span>
+              <span style={{ fontSize: 18, color: "var(--t3)", fontWeight: 400 }}>/10</span>
+            </div>
+            <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5 }}>
+              {transparencyAnswered} de {transparencyTotal} itens respondidos
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{
+              fontSize: 34, fontWeight: 900, color: v.color,
+              letterSpacing: "-0.5px", textTransform: "uppercase", lineHeight: 1.1,
+              marginBottom: 10,
+            }}>
+              {v.label}
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4, marginBottom: 12 }}>
+              <span style={{ fontSize: 48, fontWeight: 900, color: v.color, letterSpacing: "-2px", lineHeight: 1 }}>
+                {score.toFixed(1)}
+              </span>
+              <span style={{ fontSize: 18, color: "var(--t3)", fontWeight: 400 }}>/10</span>
+            </div>
+            <div style={{ fontSize: 13, color: "var(--t3)", lineHeight: 1.5 }}>
+              {heroContext}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Documental alerts */}
@@ -466,9 +517,32 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
         </div>
       )}
 
+      {/* Unverified items — seller only */}
+      {isVendedor && unverifiedItems.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <SectionDivider label="Itens n\u00e3o verificados pelo vendedor" />
+          <div style={{
+            background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)",
+            borderRadius: "var(--rm)", padding: "14px 16px",
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {unverifiedItems.map((issue) => (
+                <div key={issue.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "var(--warn)", flexShrink: 0 }}>--</span>
+                  <span style={{ fontSize: 13, color: "var(--t2)" }}>{issue.title}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 10, lineHeight: 1.5 }}>
+              Esses itens precisam ser verificados por um mec\u00e2nico
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3-step recommendation */}
       <div style={{ marginBottom: 32 }}>
-        <SectionDivider label={isVendedor ? "Recomendações" : "O que fazer agora"} />
+        <SectionDivider label={isVendedor ? "Recomenda\u00e7\u00f5es" : "O que fazer agora"} />
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {steps.map((step, i) => (
             <div key={i} style={{

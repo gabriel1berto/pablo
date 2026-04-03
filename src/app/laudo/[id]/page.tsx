@@ -359,6 +359,21 @@ export default async function LaudoPublicoPage({
   const v = verdict(score);
   const isVendedor = laudo.tipo === "vendedor";
 
+  // Validity date for seller laudos (created_at + 30 days)
+  const validUntil = new Date(laudo.created_at);
+  validUntil.setDate(validUntil.getDate() + 30);
+  const isExpired = new Date() > validUntil;
+
+  // Fetch seller WhatsApp for seller laudos
+  let sellerWhatsapp: string | null = null;
+  if (isVendedor) {
+    const { data: sellerData } = await service.auth.admin.getUserById(laudo.user_id);
+    const meta = sellerData?.user?.user_metadata;
+    if (meta?.whatsapp && typeof meta.whatsapp === "string" && meta.whatsapp.trim() !== "") {
+      sellerWhatsapp = meta.whatsapp.replace(/\D/g, "");
+    }
+  }
+
   const positiveCriticals = (issues ?? []).filter((issue) => {
     const item = checklistItems.find((i) => i.item_key === String(issue.id));
     return item?.notes === "ok" && issue.severity === "critical";
@@ -392,13 +407,25 @@ export default async function LaudoPublicoPage({
           {laudo.brand} {laudo.model} {laudo.year} · {laudo.km.toLocaleString("pt-BR")} km{laudo.state ? ` · ${laudo.state}` : ""}
         </div>
         {isVendedor && (
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8,
-            background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)",
-            borderRadius: 99, padding: "3px 10px",
-            fontSize: 11, fontWeight: 700, color: "#A78BFA",
-          }}>
-            Declarado pelo vendedor
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)",
+              borderRadius: 99, padding: "3px 10px",
+              fontSize: 11, fontWeight: 700, color: "#A78BFA",
+              alignSelf: "flex-start",
+            }}>
+              Declarado pelo vendedor
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: isExpired ? "var(--danger)" : "var(--t3)",
+              fontWeight: isExpired ? 700 : 400,
+            }}>
+              {isExpired
+                ? "Laudo vencido \u2014 atualize para manter a credibilidade"
+                : `V\u00e1lido at\u00e9 ${fmtDate(validUntil.toISOString())}`}
+            </div>
           </div>
         )}
       </div>
@@ -578,6 +605,25 @@ export default async function LaudoPublicoPage({
           ))}
         </div>
       </div>
+
+      {/* WhatsApp do vendedor — seller laudo only */}
+      {isVendedor && sellerWhatsapp && (
+        <div style={{ marginBottom: 20 }}>
+          <a
+            href={`https://wa.me/55${sellerWhatsapp}?text=${encodeURIComponent(`Vi o laudo do seu ${laudo.brand} ${laudo.model} ${laudo.year} no Pablo`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              width: "100%", height: 52,
+              background: "#25D366", color: "#fff", border: "none",
+              borderRadius: "var(--rs)", fontSize: 14, fontWeight: 800, textDecoration: "none",
+            }}
+          >
+            <span style={{ fontSize: 18 }}>{"\uD83D\uDCAC"}</span> Falar com o vendedor
+          </a>
+        </div>
+      )}
 
       {/* CTA */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

@@ -34,6 +34,8 @@ export default function CompartilhaPage() {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const [laudoCount, setLaudoCount] = useState(0);
+  const [copiedListingText, setCopiedListingText] = useState(false);
+  const [checkedCount, setCheckedCount] = useState(0);
 
   useEffect(() => {
     const client = createClient();
@@ -45,6 +47,16 @@ export default function CompartilhaPage() {
       .then(({ data }) => {
         if (!data) { setNotFound(true); return; }
         setLaudo(data);
+        // Fetch checked items count for seller listing text
+        if (data.tipo === "vendedor") {
+          client
+            .from("laudo_items")
+            .select("id", { count: "exact", head: true })
+            .eq("laudo_id", id)
+            .eq("category", "checklist")
+            .in("notes", ["ok", "problema"])
+            .then(({ count }) => setCheckedCount(count ?? 0));
+        }
         // Só conta laudos do próprio usuário logado
         client.auth.getUser().then(({ data: { user } }) => {
           if (user && user.id === data.user_id) {
@@ -132,6 +144,45 @@ export default function CompartilhaPage() {
           </div>
         </div>
       </div>
+
+      {/* Texto pronto para anúncio — seller only */}
+      {isVendedor && (
+        <div style={{
+          background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.2)",
+          borderRadius: "var(--rm)", padding: "16px 18px", marginBottom: 24,
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#A78BFA", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 10 }}>
+            Texto pronto para o an{"\u00FA"}ncio
+          </div>
+          <div style={{
+            fontSize: 13, color: "var(--t1)", lineHeight: 1.7,
+            background: "var(--bg2)", border: "1px solid var(--bd)",
+            borderRadius: "var(--rs)", padding: "12px 14px", marginBottom: 12,
+            whiteSpace: "pre-wrap",
+          }}>
+            {`Vendo ${laudo.brand} ${laudo.model} ${laudo.year} \u2014 ${laudo.km.toLocaleString("pt-BR")} km. Laudo Pablo com nota ${laudo.score?.toFixed(1)}/10. ${checkedCount} pontos verificados. Veja o laudo completo: ${link}`}
+          </div>
+          <button
+            onClick={() => {
+              const text = `Vendo ${laudo.brand} ${laudo.model} ${laudo.year} \u2014 ${laudo.km.toLocaleString("pt-BR")} km. Laudo Pablo com nota ${laudo.score?.toFixed(1)}/10. ${checkedCount} pontos verificados. Veja o laudo completo: ${link}`;
+              navigator.clipboard.writeText(text).then(() => {
+                setCopiedListingText(true);
+                setTimeout(() => setCopiedListingText(false), 2000);
+              });
+            }}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              width: "100%", height: 42,
+              background: copiedListingText ? "rgba(34,197,94,0.15)" : "#A78BFA",
+              color: copiedListingText ? "var(--ok)" : "#050505",
+              border: "none", borderRadius: "var(--rs)",
+              fontSize: 13, fontWeight: 700, cursor: "pointer",
+            }}
+          >
+            {copiedListingText ? "Texto copiado!" : "Copiar texto"}
+          </button>
+        </div>
+      )}
 
       {/* Actions */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
