@@ -29,7 +29,15 @@ const POPULAR_ORDER: Record<string, number> = {
   "6": 20,  // Audi
 };
 
+export async function GET(req: Request) {
+  return run(req);
+}
+
 export async function POST(req: Request) {
+  return run(req);
+}
+
+async function run(req: Request) {
   // Simple auth — check for a secret
   const { searchParams } = new URL(req.url);
   const key = searchParams.get("key");
