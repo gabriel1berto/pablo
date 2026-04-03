@@ -42,10 +42,10 @@ export default function Cadastro() {
 
       <div style={{ paddingTop: 36 }}>
         <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.7px", lineHeight: 1.15, marginBottom: 10 }}>
-          Criar conta
+          Crie sua conta
         </h1>
         <p style={{ fontSize: 14, color: "var(--t2)", lineHeight: 1.6 }}>
-          Leva 30 segundos. Primeiro laudo é grátis.
+          Leva 30 segundos. Primeiro checkup grátis.
         </p>
       </div>
 

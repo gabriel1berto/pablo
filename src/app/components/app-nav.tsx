@@ -24,8 +24,8 @@ export default async function AppNav() {
         pointerEvents: "auto",
         boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
       }}>
-        <Link href="/" style={{ fontSize: 12, fontWeight: 600, color: "var(--t3)", textDecoration: "none", padding: "4px 6px" }}>
-          Início
+        <Link href="/laudo/novo" style={{ fontSize: 12, fontWeight: 600, color: "var(--t3)", textDecoration: "none", padding: "4px 6px" }}>
+          + Novo
         </Link>
         <div style={{ width: 1, height: 16, background: "var(--bd)" }} />
         <Link href="/laudos" style={{ fontSize: 12, fontWeight: 600, color: "var(--t3)", textDecoration: "none", padding: "4px 6px" }}>

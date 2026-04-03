@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { signIn, resetPassword, signInWithGoogle } from "@/app/cadastro/actions";
 
 export default function Login() {
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "reset-sent">("idle");
   const [erro, setErro] = useState("");
+
+  useEffect(() => {
+    document.title = "Entrar — Pablo";
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -64,6 +68,7 @@ export default function Login() {
         <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.7px", lineHeight: 1.15, marginBottom: 10 }}>
           Entrar
         </h1>
+        <p style={{ color: "var(--t3)", fontSize: 14 }}>Seu checkup de veículos.</p>
       </div>
 
       {status === "reset-sent" ? (

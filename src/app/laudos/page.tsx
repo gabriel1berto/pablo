@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
+export const metadata = { title: "Meus laudos — Pablo" };
+
 const VERDICT_COLOR: Record<string, string> = {
   "Boa Compra": "var(--ok)",
   "Compra com Cautela": "var(--warn)",
@@ -19,9 +21,10 @@ type Laudo = {
   verdict: string | null;
   created_at: string;
   tipo: string;
+  fipe_price?: number | null;
 };
 
-function LaudoCard({ laudo }: { laudo: Laudo }) {
+function LaudoCard({ laudo, progressLabel }: { laudo: Laudo; progressLabel?: string }) {
   const verdictColor = VERDICT_COLOR[laudo.verdict ?? ""] ?? "var(--t3)";
   const date = new Date(laudo.created_at).toLocaleDateString("pt-BR");
   const href = laudo.score ? `/laudo/${laudo.id}/resultado` : `/laudo/${laudo.id}/checklist`;
@@ -65,6 +68,11 @@ function LaudoCard({ laudo }: { laudo: Laudo }) {
               {laudo.verdict}
             </div>
           )}
+          {!laudo.score && progressLabel && (
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--t4)", marginTop: 4 }}>
+              {progressLabel}
+            </div>
+          )}
         </div>
 
         <span style={{ color: "var(--t4)", fontSize: 18, flexShrink: 0 }}>›</span>
@@ -78,11 +86,13 @@ function Section({
   subtitle,
   laudos,
   accent,
+  progressMap,
 }: {
   title: string;
   subtitle: string;
   laudos: Laudo[];
   accent?: string;
+  progressMap?: Record<string, string>;
 }) {
   if (laudos.length === 0) return null;
   return (
@@ -94,7 +104,7 @@ function Section({
         <div style={{ fontSize: 11, color: "var(--t4)", marginTop: 2 }}>{subtitle}</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {laudos.map((l) => <LaudoCard key={l.id} laudo={l} />)}
+        {laudos.map((l) => <LaudoCard key={l.id} laudo={l} progressLabel={progressMap?.[l.id]} />)}
       </div>
     </div>
   );
@@ -108,9 +118,70 @@ export default async function MeusLaudosPage() {
 
   const { data: laudos } = await supabase
     .from("laudos")
-    .select("id, brand, model, year, km, score, verdict, created_at, tipo")
+    .select("id, brand, model, year, km, score, verdict, created_at, tipo, fipe_price")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  // Fix 21: Credit context
+  const { data: freeAccount } = await supabase
+    .from("free_accounts")
+    .select("email")
+    .eq("email", user.email ?? "")
+    .maybeSingle();
+
+  const isFree = !!freeAccount;
+  const laudoCount = laudos?.length ?? 0;
+  const firstUsed = laudoCount >= 1;
+
+  let creditCount = 0;
+  if (!isFree && firstUsed) {
+    const { count } = await supabase
+      .from("laudo_credits")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .is("used_at", null);
+    creditCount = count ?? 0;
+  }
+
+  let creditContext = "";
+  if (!isFree) {
+    if (!firstUsed) {
+      creditContext = "Primeiro checkup grátis";
+    } else if (creditCount > 0) {
+      creditContext = `${creditCount} crédito${creditCount > 1 ? "s" : ""} disponíve${creditCount > 1 ? "is" : "l"}`;
+    } else {
+      creditContext = "Próximos por R$ 20";
+    }
+  }
+
+  // Fix 22: Progress steps for in-progress laudos
+  const inProgressLaudos = (laudos ?? []).filter((l) => !l.score);
+  const progressMap: Record<string, string> = {};
+
+  if (inProgressLaudos.length > 0) {
+    const inProgressIds = inProgressLaudos.map((l) => l.id);
+    const { data: allItems } = await supabase
+      .from("laudo_items")
+      .select("laudo_id, category")
+      .in("laudo_id", inProgressIds);
+
+    for (const l of inProgressLaudos) {
+      const items = (allItems ?? []).filter((i) => i.laudo_id === l.id);
+      const hasChecklist = items.some((i) => i.category === "checklist");
+      const hasCautelar = items.some((i) => i.category === "cautelar");
+      const hasFipe = !!l.fipe_price;
+
+      if (!hasChecklist) {
+        progressMap[l.id] = "Passo 2 de 5 — Checklist";
+      } else if (!hasCautelar) {
+        progressMap[l.id] = "Passo 3 de 5 — Documentação";
+      } else if (!hasFipe) {
+        progressMap[l.id] = "Passo 4 de 5 — Preço";
+      } else {
+        progressMap[l.id] = "Passo 5 de 5 — Resultado";
+      }
+    }
+  }
 
   const compradores = (laudos ?? []).filter((l) => l.tipo !== "vendedor");
   const vendedores = (laudos ?? []).filter((l) => l.tipo === "vendedor");
@@ -120,15 +191,20 @@ export default async function MeusLaudosPage() {
       {/* Header */}
       <div style={{ paddingTop: 52, paddingBottom: 32, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <Link href="/" style={{ textDecoration: "none" }}>
+          <Link href="/laudos" style={{ textDecoration: "none" }}>
             <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 44 }} />
           </Link>
           <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px", marginTop: 16, marginBottom: 2 }}>
             Meus laudos
           </h1>
-          <p style={{ fontSize: 13, color: "var(--t3)" }}>
-            {laudos?.length ?? 0} laudo{laudos?.length !== 1 ? "s" : ""}
+          <p style={{ fontSize: 13, color: "var(--t3)", marginBottom: 0 }}>
+            {laudoCount} laudo{laudoCount !== 1 ? "s" : ""}
           </p>
+          {creditContext && (
+            <p style={{ fontSize: 12, color: "var(--t4)", marginTop: 2 }}>
+              {creditContext}
+            </p>
+          )}
         </div>
         <Link
           href="/laudo/novo"
@@ -174,12 +250,14 @@ export default async function MeusLaudosPage() {
             subtitle="Avaliações de carros que você pesquisou"
             laudos={compradores}
             accent="var(--accent)"
+            progressMap={progressMap}
           />
           <Section
             title="Laudos de venda"
             subtitle="Declarações do seu próprio carro"
             laudos={vendedores}
             accent="#A78BFA"
+            progressMap={progressMap}
           />
         </>
       )}

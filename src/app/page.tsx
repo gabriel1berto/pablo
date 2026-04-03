@@ -26,7 +26,7 @@ export default function LP() {
         setCiladaIdx((prev) => (prev + 1) % CILADAS.length);
         setFade(true);
       }, 250);
-    }, 3500);
+    }, 6000);
     return () => clearInterval(t);
   }, []);
 
@@ -59,14 +59,13 @@ export default function LP() {
           lineHeight: 1.15, marginBottom: 0, color: "var(--t1)",
         }}>
           Sabe aquele carro que<br />
-          <span style={{ color: "var(--accent)" }}>parece perfeito?</span>
+          {" "}<span style={{ color: "var(--accent)" }}>parece perfeito?</span>
         </h1>
         <p style={{
           fontSize: 15, fontWeight: 500, letterSpacing: "-0.2px",
           lineHeight: 1.5, marginTop: 14, color: "var(--t3)",
         }}>
           O Pablo te ajuda a descobrir o que tem de errado antes de você pagar.
-          E se você vende, mostra que o carro é confiável.
         </p>
       </div>
 
@@ -78,7 +77,7 @@ export default function LP() {
       }}>
         <div style={{ background: "var(--bg2)", padding: "18px 8px", textAlign: "center" }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: "var(--accent)", lineHeight: 1 }}>Grátis</div>
-          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>primeiro laudo</div>
+          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>primeiro checkup</div>
         </div>
         <div style={{ background: "var(--bg2)", padding: "18px 8px", textAlign: "center" }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: "var(--t1)", lineHeight: 1 }}>8 min</div>
@@ -86,7 +85,7 @@ export default function LP() {
         </div>
         <div style={{ background: "var(--bg2)", padding: "18px 8px", textAlign: "center" }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: "var(--t1)", lineHeight: 1 }}>R$ 20</div>
-          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>a partir do segundo</div>
+          <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 6 }}>por laudo</div>
         </div>
       </div>
 
@@ -102,7 +101,7 @@ export default function LP() {
           marginBottom: 32,
         }}
       >
-        Fazer meu primeiro laudo
+        Fazer meu checkup
       </Link>
 
       {/* ── Trial chat ────────────────────────────────── */}
@@ -117,7 +116,7 @@ export default function LP() {
           textTransform: "uppercase", letterSpacing: "1px",
           marginBottom: 16,
         }}>
-          Casos reais
+          Isso acontece todo dia
         </div>
 
         <div style={{
@@ -161,7 +160,7 @@ export default function LP() {
           <img src="/icon-pablo.png" alt="P" style={{ width: 32, height: 32, borderRadius: "50%" }} />
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "var(--t1)" }}>Converse com o Pablo</div>
-            <div style={{ fontSize: 12, color: "var(--t3)" }}>Seu mecânico de confiança dentro do app</div>
+            <div style={{ fontSize: 12, color: "var(--t3)" }}>Tira dúvida sobre qualquer carro</div>
           </div>
         </div>
 
@@ -226,7 +225,7 @@ export default function LP() {
           fontSize: 10, fontWeight: 800, color: "var(--t4)",
           textTransform: "uppercase", letterSpacing: "1px", marginBottom: 14,
         }}>
-          Exemplo de laudo
+          Exemplo de resultado
         </div>
 
         <div style={{
@@ -299,25 +298,6 @@ export default function LP() {
         </div>
       </div>
 
-      {/* ── Laudo real ────────────────────────────────── */}
-      <Link
-        href="/laudo/52ce00a0-c142-4739-9141-f273718db41f"
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "14px 16px",
-          background: "var(--bg2)", border: "1px solid var(--bd)",
-          borderLeft: "3px solid var(--accent)",
-          borderRadius: "var(--rm)", textDecoration: "none",
-          marginBottom: 48,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)" }}>Veja um laudo real</div>
-          <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>Onix 2017 — resultado completo</div>
-        </div>
-        <span style={{ fontSize: 14, color: "var(--t3)" }}>→</span>
-      </Link>
-
       {/* ── Garantia ──────────────────────────────────── */}
       <div style={{
         display: "flex", alignItems: "center", gap: 12,
@@ -374,7 +354,7 @@ export default function LP() {
             textDecoration: "none",
           }}
         >
-          Começar agora
+          Fazer meu checkup grátis
         </Link>
       </div>
     </main>

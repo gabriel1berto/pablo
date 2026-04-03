@@ -1,19 +1,29 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 type Step = "closed" | "email" | "chat" | "done";
+type ChatMessage = { role: "user" | "assistant"; content: string; images?: string[] };
+
+const MAX_MESSAGES = 10;
 
 export default function TrialChat() {
   const [step, setStep] = useState<Step>("closed");
   const [email, setEmail] = useState("");
   const [input, setInput] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [response, setResponse] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messageCount, setMessageCount] = useState(0);
   const [streaming, setStreaming] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamingText]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -39,9 +49,13 @@ export default function TrialChat() {
     const text = input.trim();
     if (!text && !images.length) return;
     if (streaming) return;
-    setStreaming(true);
 
-    // Build content
+    const newCount = messageCount + 1;
+    setMessageCount(newCount);
+    setStreaming(true);
+    setStreamingText("");
+
+    // Build content for API
     let content: string | Array<any> = text || "Analise esta imagem.";
     if (images.length) {
       const parts: Array<any> = [];
@@ -55,11 +69,34 @@ export default function TrialChat() {
       content = parts;
     }
 
+    // Add user message to display
+    const userMsg: ChatMessage = { role: "user", content: text || "Analise esta imagem.", images: [...images] };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput("");
+    setImages([]);
+
+    // Build messages array for API (full conversation history)
+    const apiMessages = updatedMessages.map((m) => {
+      if (m.role === "user" && m.images && m.images.length > 0) {
+        const parts: Array<any> = [];
+        for (const uri of m.images) {
+          const match = uri.match(/^data:(image\/\w+);base64,(.+)$/);
+          if (match) {
+            parts.push({ type: "image", source: { type: "base64", media_type: match[1], data: match[2] } });
+          }
+        }
+        parts.push({ type: "text", text: m.content });
+        return { role: m.role, content: parts };
+      }
+      return { role: m.role, content: m.content };
+    });
+
     try {
       const res = await fetch("/api/chat-trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, email }),
+        body: JSON.stringify({ messages: apiMessages, email }),
       });
 
       if (!res.ok) { setStreaming(false); return; }
@@ -78,14 +115,23 @@ export default function TrialChat() {
           if (data === "[DONE]") continue;
           try {
             const { text: t } = JSON.parse(data);
-            if (t) { result += t; setResponse(result); }
+            if (t) { result += t; setStreamingText(result); }
           } catch {}
         }
       }
       reader.releaseLock();
+
+      // Add assistant message to history
+      const assistantMsg: ChatMessage = { role: "assistant", content: result };
+      setMessages((prev) => [...prev, assistantMsg]);
+      setStreamingText("");
     } catch {}
     setStreaming(false);
-    setStep("done");
+
+    // Check if we've reached the limit
+    if (newCount >= MAX_MESSAGES) {
+      setStep("done");
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -114,7 +160,7 @@ export default function TrialChat() {
             Faça uma pergunta para o Pablo
           </div>
           <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>
-            Sobre qualquer carro. Sem criar conta.
+            Uma conversa com o Pablo, sem compromisso
           </div>
         </div>
       </button>
@@ -163,8 +209,9 @@ export default function TrialChat() {
     );
   }
 
-  // ── Chat (1 pergunta) ──
+  // ── Chat (multi-turn, up to 10 messages) ──
   if (step === "chat") {
+    const remaining = MAX_MESSAGES - messageCount;
     return (
       <div style={{
         background: "var(--bg2)", border: "1px solid var(--bd)",
@@ -178,19 +225,82 @@ export default function TrialChat() {
           <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>Pablo</span>
         </div>
 
-        <div style={{ padding: "16px" }}>
-          <div style={{
-            display: "flex", justifyContent: "flex-start", marginBottom: 14,
-          }}>
+        <div style={{ padding: "16px", maxHeight: 400, overflowY: "auto" }}>
+          {/* Initial Pablo greeting */}
+          {messages.length === 0 && (
             <div style={{
-              background: "var(--bg3)", color: "var(--t1)",
-              borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
-              maxWidth: "90%", fontSize: 13, lineHeight: 1.6,
+              display: "flex", justifyContent: "flex-start", marginBottom: 14,
             }}>
-              Me conta: qual carro você está olhando? Marca, modelo, ano e km. Pode mandar foto também. Uma pergunta e eu mostro como posso ajudar.
+              <div style={{
+                background: "var(--bg3)", color: "var(--t1)",
+                borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
+                maxWidth: "90%", fontSize: 13, lineHeight: 1.6,
+              }}>
+                Me conta: qual carro você está olhando? Marca, modelo, ano e km. Pode mandar foto também.
+              </div>
             </div>
-          </div>
+          )}
 
+          {/* Conversation history */}
+          {messages.map((msg, i) => (
+            <div key={i} style={{
+              display: "flex",
+              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+              marginBottom: 10,
+            }}>
+              <div style={{
+                background: msg.role === "user" ? "var(--accent)" : "var(--bg3)",
+                color: msg.role === "user" ? "#050505" : "var(--t1)",
+                borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                padding: msg.role === "user" ? "10px 14px" : "12px 16px",
+                maxWidth: msg.role === "user" ? "82%" : "90%",
+                fontSize: 13, lineHeight: 1.6,
+                whiteSpace: "pre-wrap",
+              }}>
+                {msg.role === "user" && msg.images && msg.images.map((img, j) => (
+                  <img key={j} src={img} alt="" style={{ width: "100%", maxWidth: 180, borderRadius: 8, marginBottom: 6, display: "block" }} />
+                ))}
+                {msg.content}
+              </div>
+            </div>
+          ))}
+
+          {/* Streaming response */}
+          {streaming && streamingText && (
+            <div style={{
+              display: "flex", justifyContent: "flex-start", marginBottom: 10,
+            }}>
+              <div style={{
+                background: "var(--bg3)", color: "var(--t1)",
+                borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
+                maxWidth: "90%", fontSize: 13, lineHeight: 1.65,
+                whiteSpace: "pre-wrap",
+              }}>
+                {streamingText}
+              </div>
+            </div>
+          )}
+
+          {/* Typing indicator */}
+          {streaming && !streamingText && (
+            <div style={{
+              display: "flex", justifyContent: "flex-start", marginBottom: 10,
+            }}>
+              <div style={{
+                background: "var(--bg3)", color: "var(--t3)",
+                borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
+                fontSize: 13,
+              }}>
+                ...
+              </div>
+            </div>
+          )}
+
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input area */}
+        <div style={{ padding: "0 16px 12px" }}>
           {/* Image previews */}
           {images.length > 0 && (
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -249,12 +359,20 @@ export default function TrialChat() {
               }}
             >↑</button>
           </div>
+
+          {/* Remaining count */}
+          <div style={{
+            textAlign: "center", fontSize: 11, color: "var(--t4)",
+            marginTop: 8,
+          }}>
+            {remaining} {remaining === 1 ? "pergunta restante" : "perguntas restantes"}
+          </div>
         </div>
       </div>
     );
   }
 
-  // ── Done (response + CTA) ──
+  // ── Done (conversation + CTA) ──
   return (
     <div style={{
       background: "var(--bg2)", border: "1px solid var(--bd)",
@@ -268,40 +386,40 @@ export default function TrialChat() {
         <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)" }}>Pablo</span>
       </div>
 
-      <div style={{ padding: "16px" }}>
-        {/* User message */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-          <div style={{
-            background: "var(--accent)", color: "#050505",
-            borderRadius: "14px 14px 4px 14px", padding: "10px 14px",
-            maxWidth: "82%", fontSize: 13, lineHeight: 1.6,
+      <div style={{ padding: "16px", maxHeight: 300, overflowY: "auto" }}>
+        {/* Show last few messages */}
+        {messages.slice(-4).map((msg, i) => (
+          <div key={i} style={{
+            display: "flex",
+            justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+            marginBottom: 10,
           }}>
-            {images.length > 0 && images.map((img, i) => (
-              <img key={i} src={img} alt="" style={{ width: "100%", maxWidth: 180, borderRadius: 8, marginBottom: 6, display: "block" }} />
-            ))}
-            {input || "Analise esta imagem."}
+            <div style={{
+              background: msg.role === "user" ? "var(--accent)" : "var(--bg3)",
+              color: msg.role === "user" ? "#050505" : "var(--t1)",
+              borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+              padding: msg.role === "user" ? "10px 14px" : "12px 16px",
+              maxWidth: msg.role === "user" ? "82%" : "90%",
+              fontSize: 13, lineHeight: 1.6,
+              whiteSpace: "pre-wrap",
+            }}>
+              {msg.role === "user" && msg.images && msg.images.map((img, j) => (
+                <img key={j} src={img} alt="" style={{ width: "100%", maxWidth: 180, borderRadius: 8, marginBottom: 6, display: "block" }} />
+              ))}
+              {msg.content}
+            </div>
           </div>
-        </div>
+        ))}
+      </div>
 
-        {/* Pablo response */}
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-          <div style={{
-            background: "var(--bg3)", color: "var(--t1)",
-            borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
-            maxWidth: "90%", fontSize: 13, lineHeight: 1.65,
-            whiteSpace: "pre-wrap",
-          }}>
-            {response}
-          </div>
-        </div>
-
-        {/* CTA */}
+      {/* CTA */}
+      <div style={{ padding: "0 16px 16px" }}>
         <div style={{
           background: "rgba(0,212,170,0.06)", border: "1px solid rgba(0,212,170,0.12)",
           borderRadius: 12, padding: "14px 16px", textAlign: "center",
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t1)", marginBottom: 6 }}>
-            Essa foi só uma amostra. No laudo completo, o Pablo analisa o carro inteiro.
+            Essa foi só uma amostra. No checkup completo, o Pablo analisa o carro inteiro.
           </div>
           <Link
             href="/cadastro"
@@ -312,7 +430,7 @@ export default function TrialChat() {
               marginTop: 4,
             }}
           >
-            Fazer meu laudo
+            Fazer meu checkup
           </Link>
         </div>
       </div>

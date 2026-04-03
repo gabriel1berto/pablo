@@ -202,8 +202,13 @@ export default async function LaudoPublicoPage({
 
   if (!laudo) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
-        <div style={{ textAlign: "center" }}>
+      <main style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", padding: "0 24px" }}>
+        <div style={{ paddingTop: 52, paddingBottom: 32 }}>
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 40 }} />
+          </Link>
+        </div>
+        <div style={{ textAlign: "center", paddingTop: 48 }}>
           <div style={{ fontSize: 14, color: "var(--t3)", marginBottom: 16 }}>Laudo não encontrado.</div>
           <Link href="/laudo/novo" style={{ fontSize: 14, color: "var(--accent)", textDecoration: "none" }}>
             Criar um laudo →
@@ -218,8 +223,13 @@ export default async function LaudoPublicoPage({
   // Laudo not completed yet
   if (!laudo.score) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
-        <div style={{ textAlign: "center", maxWidth: 320 }}>
+      <main style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", padding: "0 24px" }}>
+        <div style={{ paddingTop: 52, paddingBottom: 32 }}>
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <img src="/logo-pablo.jpeg" alt="pablo" style={{ height: 40 }} />
+          </Link>
+        </div>
+        <div style={{ textAlign: "center", maxWidth: 320, margin: "0 auto", paddingTop: 48 }}>
           <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>
             {laudo.brand} {laudo.model} {laudo.year}
           </div>
