@@ -52,6 +52,20 @@ export default async function ChecklistPage({
   const uniqueGeneric = (generic ?? []).filter((g) => !specificTitles.has(g.title.toLowerCase()));
   const displayIssues = [...specificIssues, ...uniqueGeneric];
 
+  // Load previously saved checklist answers
+  const { data: savedItems } = await supabase
+    .from("laudo_items")
+    .select("item_key, notes")
+    .eq("laudo_id", id)
+    .eq("category", "checklist");
+
+  const savedStates: Record<string, string> = {};
+  for (const item of savedItems ?? []) {
+    if (item.notes === "ok" || item.notes === "problema") {
+      savedStates[item.item_key] = item.notes;
+    }
+  }
+
   const specificCount = specificIssues.length;
   const criticals = specificIssues.filter((i) => i.severity === "critical").length;
   const warns = specificIssues.filter((i) => i.severity === "warn").length;
@@ -121,7 +135,7 @@ export default async function ChecklistPage({
                 </div>
               </div>
             )}
-            <ChecklistForm laudoId={id} issues={displayIssues} carInfo={{ brand: laudo.brand, model: laudo.model, year: laudo.year, km: laudo.km }} />
+            <ChecklistForm laudoId={id} issues={displayIssues} carInfo={{ brand: laudo.brand, model: laudo.model, year: laudo.year, km: laudo.km }} savedStates={savedStates} />
           </>
         )}
       </div>

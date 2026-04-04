@@ -50,13 +50,24 @@ export default function ChecklistForm({
   laudoId,
   issues,
   carInfo,
+  savedStates,
 }: {
   laudoId: string;
   issues: Issue[];
   carInfo: { brand: string; model: string; year: number; km: number };
+  savedStates?: Record<string, string>;
 }) {
   const [level, setLevel] = useState<Level>(null);
-  const [states, setStates] = useState<Record<number, State>>({});
+  const [states, setStates] = useState<Record<number, State>>(() => {
+    if (!savedStates) return {};
+    const initial: Record<number, State> = {};
+    for (const [key, val] of Object.entries(savedStates)) {
+      if (val === "ok" || val === "problema") {
+        initial[parseInt(key)] = val;
+      }
+    }
+    return initial;
+  });
   const [openItems, setOpenItems] = useState<Set<number>>(() => {
     const open = new Set<number>();
     const seenCats = new Set<string>();
@@ -367,7 +378,7 @@ export default function ChecklistForm({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setHelpQuestion(`Como verifico "${issue.title.toLowerCase()}" no ${carInfo.model}?`)}
+                    onClick={() => setHelpQuestion(`Preciso de ajuda com "${issue.title.toLowerCase()}" no ${carInfo.model} ${carInfo.year}. Me diz como verificar de um jeito rápido e se eu mandar foto você analisa?`)}
                     style={{
                       flex: "0 0 auto", height: 36, fontSize: 11, fontWeight: 700,
                       border: "1px solid var(--bg4)",

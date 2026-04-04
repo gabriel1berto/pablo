@@ -70,7 +70,7 @@ export async function researchModelIssues(
 Gere EXATAMENTE 15 problemas REAIS e conhecidos para: ${brand} ${model} ${year}, com ${kmLabel}.
 
 Regras:
-- "how_to_check": 1 frase — o que fazer + sinal concreto de OK vs Problema. Termos técnicos com explicação entre parênteses.
+- "how_to_check": 1 frase — verificação RÁPIDA que o comprador faz na hora, sem ferramenta. Exemplo: "Olhe embaixo do carro se tem mancha de óleo no chão" ou "Ligue o motor a frio e ouça se tem barulho metálico nos primeiros 10 segundos". NUNCA peça para o usuário esperar dias ou usar ferramentas especiais.
 - "if_bad": 1 frase — consequência técnica para o carro, com nome da peça e o que ela faz entre parênteses.
 - "repair_cost": faixa realista Brasil 2025 (ex: "R$ 800–1.500").
 - "severity": "critical" se risco de segurança ou custo acima de R$ 800, "warn" para demais.

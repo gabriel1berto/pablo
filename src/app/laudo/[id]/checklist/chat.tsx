@@ -338,7 +338,7 @@ export default function Chat({
                 <div style={{ fontSize: 14, lineHeight: 1.65 }}>
                   {(() => {
                     if (initialQuestion) {
-                      return `Tira uma foto dessa parte do carro e manda aqui — consigo te dar um diagnóstico visual. Ou aperta ↑ pra mandar a pergunta.`;
+                      return `Manda uma foto dessa parte que eu analiso na hora. Se não der pra tirar foto agora, aperta ↑ que eu te explico como verificar sem ferramenta.`;
                     }
                     const p = problems.length;
                     const a = answered.length;
