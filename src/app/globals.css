@@ -41,3 +41,22 @@ select,
 button {
   font-family: "Inter", sans-serif;
 }
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 560px;
+    padding: 0 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 560px;
+  }
+}

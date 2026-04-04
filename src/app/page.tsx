@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import TrialChat from "./components/trial-chat";
+import Footer from "./components/footer";
 
 const CILADAS = [
   { car: "Civic 2019", problem: "Motor já tinha sido retificado", loss: "Prejuízo de R$ 8.000" },
@@ -33,9 +34,8 @@ export default function LP() {
   const cilada = CILADAS[ciladaIdx];
 
   return (
-    <main style={{
+    <main className="container" style={{
       minHeight: "100vh", display: "flex", flexDirection: "column",
-      maxWidth: 480, margin: "0 auto", padding: "0 24px",
     }}>
 
       {/* ── Logo + Login ────────────────────────────── */}
@@ -357,6 +357,8 @@ export default function LP() {
           Fazer meu checkup grátis
         </Link>
       </div>
+
+      <Footer />
     </main>
   );
 }
