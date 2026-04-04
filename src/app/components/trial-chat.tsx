@@ -20,6 +20,7 @@ export default function TrialChat() {
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -228,17 +229,51 @@ export default function TrialChat() {
         <div style={{ padding: "16px", maxHeight: 400, overflowY: "auto" }}>
           {/* Initial Pablo greeting */}
           {messages.length === 0 && (
-            <div style={{
-              display: "flex", justifyContent: "flex-start", marginBottom: 14,
-            }}>
+            <>
               <div style={{
-                background: "var(--bg3)", color: "var(--t1)",
-                borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
-                maxWidth: "90%", fontSize: 13, lineHeight: 1.6,
+                display: "flex", justifyContent: "flex-start", marginBottom: 14,
               }}>
-                Me conta: qual carro você está olhando? Marca, modelo, ano e km. Pode mandar foto também.
+                <div style={{
+                  background: "var(--bg3)", color: "var(--t1)",
+                  borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
+                  maxWidth: "90%", fontSize: 13, lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
+                }}>
+                  Eu sou o Pablo. Analiso carros usados há 20 anos.{"\n\n"}Posso te ajudar com:
+                </div>
               </div>
-            </div>
+              <div style={{
+                display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14,
+              }}>
+                {[
+                  { label: "Analisar foto de um carro", action: "camera" as const },
+                  { label: "Pontos fracos de um modelo", action: "text" as const, value: "Quais os pontos fracos do " },
+                  { label: "O preço tá justo?", action: "text" as const, value: "Estou olhando um carro por R$ " },
+                  { label: "O que verificar na visita", action: "text" as const, value: "Vou ver um carro amanhã, o que devo verificar?" },
+                ].map((btn) => (
+                  <button
+                    key={btn.label}
+                    type="button"
+                    onClick={() => {
+                      if (btn.action === "camera") {
+                        cameraRef.current?.click();
+                      } else {
+                        setInput(btn.value);
+                        setTimeout(() => textareaRef.current?.focus(), 0);
+                      }
+                    }}
+                    style={{
+                      background: "var(--bg3)", border: "1px solid var(--bd)",
+                      borderRadius: 99, padding: "7px 14px", fontSize: 12,
+                      fontWeight: 600, color: "var(--accent)", cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Conversation history */}
@@ -338,6 +373,7 @@ export default function TrialChat() {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>+</button>
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}

@@ -55,7 +55,7 @@ export default function LP() {
       {/* ── Hero ──────────────────────────────────────── */}
       <div style={{ paddingTop: 48, paddingBottom: 40 }}>
         <h1 style={{
-          fontSize: 30, fontWeight: 900, letterSpacing: "-1px",
+          fontSize: "min(30px, 8vw)", fontWeight: 900, letterSpacing: "-1px",
           lineHeight: 1.15, marginBottom: 0, color: "var(--t1)",
         }}>
           Sabe aquele carro que<br />
@@ -111,13 +111,13 @@ export default function LP() {
 
       {/* ── Ciladas ───────────────────────────────────── */}
       <div style={{ marginBottom: 48 }}>
-        <div style={{
+        <h2 style={{
           fontSize: 10, fontWeight: 800, color: "var(--t4)",
           textTransform: "uppercase", letterSpacing: "1px",
-          marginBottom: 16,
+          margin: 0, marginBottom: 16,
         }}>
           Isso acontece todo dia
-        </div>
+        </h2>
 
         <div style={{
           background: "rgba(255,68,68,0.04)", border: "1px solid rgba(255,68,68,0.12)",
@@ -221,12 +221,12 @@ export default function LP() {
 
       {/* ── Resultado ─────────────────────────────────── */}
       <div style={{ marginBottom: 12 }}>
-        <div style={{
+        <h2 style={{
           fontSize: 10, fontWeight: 800, color: "var(--t4)",
-          textTransform: "uppercase", letterSpacing: "1px", marginBottom: 14,
+          textTransform: "uppercase", letterSpacing: "1px", margin: 0, marginBottom: 14,
         }}>
           Exemplo de resultado
-        </div>
+        </h2>
 
         <div style={{
           background: "var(--bg2)", border: "1px solid var(--bd)",
@@ -327,7 +327,7 @@ export default function LP() {
           background: "var(--bg2)", border: "1px solid var(--bd)",
           borderRadius: "var(--rm)", padding: "16px 14px", textDecoration: "none",
         }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", marginBottom: 6 }}>Vai comprar?</div>
+          <h3 style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", margin: 0, marginBottom: 6 }}>Vai comprar?</h3>
           <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
             Saiba o que tem de errado antes de fechar negócio
           </div>
@@ -336,7 +336,7 @@ export default function LP() {
           background: "var(--bg2)", border: "1px solid var(--bd)",
           borderRadius: "var(--rm)", padding: "16px 14px", textDecoration: "none",
         }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#A78BFA", marginBottom: 6 }}>Vai vender?</div>
+          <h3 style={{ fontSize: 14, fontWeight: 800, color: "#A78BFA", margin: 0, marginBottom: 6 }}>Vai vender?</h3>
           <div style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.5 }}>
             Mostre pro comprador que o carro é confiável
           </div>

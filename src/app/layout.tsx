@@ -5,9 +5,28 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Pablo — Laudo de compra de veículos",
+  title: "Pablo — Checkup de veículos usados",
   description:
-    "Gere um laudo completo antes de comprar um carro. FIPE, checklist técnico e análise de documentação em 8 minutos.",
+    "Descubra o que tem de errado no carro antes de pagar. IA que analisa fotos, identifica problemas e diz quanto pedir de desconto.",
+  openGraph: {
+    title: "Pablo — Checkup de veículos usados",
+    description: "Descubra o que tem de errado no carro antes de pagar.",
+    url: "https://pabloapps.net",
+    siteName: "Pablo",
+    type: "website",
+    images: [{ url: "/logo-pablo.jpeg", width: 1024, height: 1024 }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Pablo — Checkup de veículos usados",
+    description: "Descubra o que tem de errado no carro antes de pagar.",
+    images: ["/logo-pablo.jpeg"],
+  },
+  icons: {
+    icon: "/icon-pablo.png",
+    apple: "/icon-pablo.png",
+  },
+  metadataBase: new URL("https://pabloapps.net"),
 };
 
 export default function RootLayout({
