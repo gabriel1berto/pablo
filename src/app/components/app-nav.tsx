@@ -4,9 +4,9 @@ import LogoutButton from "@/app/laudos/logout-button";
 
 export default async function AppNav() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) return null;
+  if (!user) return null;
 
   return (
     <div style={{

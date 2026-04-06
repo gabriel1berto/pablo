@@ -12,7 +12,23 @@ export async function POST(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
-  const body = await req.json();
+  // Cap payload size (500KB — inclui fotos base64)
+  let rawBody: string;
+  try {
+    rawBody = await req.text();
+  } catch {
+    return new Response("Erro ao ler body", { status: 400 });
+  }
+  if (rawBody.length > 500 * 1024) {
+    return new Response("Payload muito grande", { status: 413 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return new Response("JSON inválido", { status: 400 });
+  }
   const { laudoId, messages, checklistState, userLevel } = body as {
     laudoId: string;
     messages: Array<{
@@ -31,6 +47,10 @@ export async function POST(req: Request) {
 
   if (!laudoId || !messages?.length) {
     return new Response("Missing laudoId or messages", { status: 400 });
+  }
+
+  if (messages.length > 50) {
+    return new Response("Muitas mensagens", { status: 400 });
   }
 
   const { data: laudo } = await supabase

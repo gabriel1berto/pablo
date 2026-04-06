@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { normalizeModelKey } from "@/lib/model-utils";
+import { normalizeModelKey, escapeLikePattern } from "@/lib/model-utils";
 import ChecklistForm from "./form";
 import ResearchLoader from "./research-loader";
 
@@ -30,7 +30,7 @@ export default async function ChecklistPage({
   const { data: issues } = await supabase
     .from("car_issues")
     .select("id, category, title, description, severity, how_to_check, why_important, if_bad, repair_cost")
-    .ilike("model_pattern", `%${modelKey}%`)
+    .ilike("model_pattern", `%${escapeLikePattern(modelKey)}%`)
     .neq("category", "_sentinel")
     .order("category")
     .order("sort_order");

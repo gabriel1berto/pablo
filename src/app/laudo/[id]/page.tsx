@@ -220,6 +220,15 @@ export default async function LaudoPublicoPage({
     }
   }
 
+  // Penalizar cobertura baixa (mesma lógica do resultado)
+  const totalItems = (issues ?? []).length;
+  const answeredItems = checklistItems.filter((i) => i.notes === "ok" || i.notes === "problema").length;
+  if (totalItems > 0 && answeredItems > 0) {
+    const coverage = answeredItems / totalItems;
+    if (coverage < 0.5) score -= 1.5;
+    else if (coverage < 0.75) score -= 0.5;
+  }
+
   score = Math.round(Math.max(0, Math.min(10, score)) * 10) / 10;
   if (isNaN(score)) score = 10;
 

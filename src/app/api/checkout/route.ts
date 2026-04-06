@@ -19,8 +19,7 @@ export async function POST() {
     });
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[checkout]", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[checkout]", err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: "Erro ao criar sessão de pagamento. Tente novamente." }, { status: 500 });
   }
 }

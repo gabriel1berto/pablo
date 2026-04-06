@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   CAUTELAR_LABEL, CAUTELAR_DETAIL, CAT_LABEL,
   verdict, fmt, fmtDate, buildSteps,
@@ -180,11 +181,14 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
   const isExpired = new Date() > validUntil;
 
   const hasAnswers = checklistItems.some((i) => i.notes === "ok" || i.notes === "problema");
-  if (hasAnswers) {
-    const { error: persistError } = await supabase
+  const scoreChanged = hasAnswers && (laudo.score !== score || laudo.verdict !== v.label);
+  if (scoreChanged) {
+    const service = createServiceClient();
+    const { error: persistError } = await service
       .from("laudos")
       .update({ score, verdict: v.label })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
     if (persistError) console.error("[resultado] score persist failed:", persistError);
   }
 

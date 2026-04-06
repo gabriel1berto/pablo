@@ -4,8 +4,60 @@ export const maxDuration = 60;
 
 const client = new Anthropic();
 
+// ── Rate limit in-memory por IP ──────────────────────────────
+const rateMap = new Map<string, { count: number; resetAt: number }>();
+const MAX_REQUESTS = 20;
+const WINDOW_MS = 60 * 60 * 1000; // 1 hora
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+  if (entry.count >= MAX_REQUESTS) return true;
+  entry.count++;
+  return false;
+}
+
+// Limpa entries expiradas a cada 5 min pra não vazar memória
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of rateMap) {
+    if (now > val.resetAt) rateMap.delete(key);
+  }
+}, 5 * 60 * 1000);
+
+const MAX_MESSAGES = 10;
+const MAX_BODY_BYTES = 50 * 1024; // 50KB
+
 export async function POST(req: Request) {
-  const body = await req.json();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")
+    || "unknown";
+
+  if (isRateLimited(ip)) {
+    return new Response("Muitas requisições. Tente novamente mais tarde.", { status: 429 });
+  }
+
+  // Cap payload size — lê como text pra checar tamanho real (Content-Length é client-controlled)
+  let rawBody: string;
+  try {
+    rawBody = await req.text();
+  } catch {
+    return new Response("Erro ao ler body", { status: 400 });
+  }
+  if (rawBody.length > MAX_BODY_BYTES) {
+    return new Response("Payload muito grande", { status: 413 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return new Response("JSON inválido", { status: 400 });
+  }
   const { messages, email } = body as {
     messages: Array<{
       role: "user" | "assistant";
@@ -18,7 +70,13 @@ export async function POST(req: Request) {
     return new Response("Missing messages or email", { status: 400 });
   }
 
-  const turnCount = messages.filter((m) => m.role === "user").length;
+  // Cap server-side: máximo 10 mensagens do usuário
+  const userMsgCount = messages.filter((m) => m.role === "user").length;
+  if (userMsgCount > MAX_MESSAGES) {
+    return new Response("Limite de mensagens atingido. Crie uma conta para continuar.", { status: 403 });
+  }
+
+  const turnCount = userMsgCount;
 
   const systemPrompt = `Você é o Pablo. Mecânico brasileiro com 20 anos de estrada, parceiro e caloroso. Essa é uma conversa de teste — o usuário tá conhecendo a ferramenta antes de criar conta.
 

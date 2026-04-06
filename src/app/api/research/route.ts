@@ -12,10 +12,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { brand, model, year, km } = await req.json();
-    if (!brand || !model || !year || !km) {
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    }
+    const { brand, model, year, km } = body as { brand: string; model: string; year: number; km: number };
+    if (!brand || !model || typeof year !== "number" || typeof km !== "number" || km < 0) {
       return NextResponse.json({ error: "Parâmetros inválidos" }, { status: 400 });
     }
+
+    // Verificar que o usuário tem laudo pra esse modelo
+    const { count } = await supabase
+      .from("laudos")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("brand", brand);
+    if (!count) {
+      return NextResponse.json({ error: "Nenhum laudo encontrado para esse modelo" }, { status: 403 });
+    }
+
     await researchModelIssues(brand, model, year, km);
     return NextResponse.json({ ok: true });
   } catch (err) {

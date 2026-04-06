@@ -11,3 +11,8 @@ export function normalizeModelKey(fipeModelName: string): string {
   // Title-case proper names (DUSTER → Duster, COROLLA → Corolla)
   return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
+
+/** Escape SQL LIKE wildcards (% and _) for safe use in ilike queries */
+export function escapeLikePattern(value: string): string {
+  return value.replace(/%/g, "\\%").replace(/_/g, "\\_");
+}

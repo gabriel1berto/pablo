@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createServiceClient } from "@/lib/supabase/service";
-import { normalizeModelKey } from "@/lib/model-utils";
+import { normalizeModelKey, escapeLikePattern } from "@/lib/model-utils";
 export { normalizeModelKey };
 
 function kmBucket(km: number): [number, number] {
@@ -23,14 +23,14 @@ export async function researchModelIssues(
   const { data: existing } = await supabase
     .from("car_issues")
     .select("id, category")
-    .ilike("model_pattern", `%${modelKey}%`)
+    .ilike("model_pattern", `%${escapeLikePattern(modelKey)}%`)
     .limit(5);
 
   const hasRealItems = (existing ?? []).some(r => r.category !== "_sentinel");
   if (hasRealItems) return;
 
-  // Insert sentinel antes da chamada à API — evita loop em caso de timeout
-  await supabase.from("car_issues").insert({
+  // Insert sentinel antes da chamada à API — unique index garante que só 1 request ganha
+  const { error: sentinelError } = await supabase.from("car_issues").insert({
     brand,
     model_pattern: modelKey,
     year_from: 2000,
@@ -43,6 +43,9 @@ export async function researchModelIssues(
     severity: "warn",
     sort_order: 999,
   });
+
+  // Se o sentinel já existia (unique conflict), outro request já tá processando — sai
+  if (sentinelError) return;
 
   const [km_from, km_to] = kmBucket(km);
   const kmLabel =

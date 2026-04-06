@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function criarLaudo(formData: FormData) {
   const supabase = await createClient();
@@ -31,7 +32,7 @@ export async function criarLaudo(formData: FormData) {
     .eq("email", user.email ?? "")
     .maybeSingle();
 
-  let creditToConsume: string | null = null;
+  let creditConsumed: string | null = null;
 
   if (!freeAccount) {
     const { count: laudoCount } = await supabase
@@ -40,41 +41,43 @@ export async function criarLaudo(formData: FormData) {
       .eq("user_id", user.id);
 
     if ((laudoCount ?? 0) >= 1) {
-      // Precisa de crédito — tenta reservar um
-      const { data: credit } = await supabase
+      // ── Claim atômico: UPDATE WHERE used_at IS NULL ──────────
+      // Se 2 requests concorrentes tentarem o mesmo crédito,
+      // apenas um UPDATE retorna a row (Postgres row-level lock).
+      const { data: claimed } = await supabase
         .from("laudo_credits")
-        .select("id")
+        .update({ used_at: new Date().toISOString() })
         .eq("user_id", user.id)
         .is("used_at", null)
+        .select("id")
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (!credit) {
+      if (!claimed) {
         return { error: "Sem créditos. Compre um laudo para continuar." };
       }
 
-      creditToConsume = credit.id;
+      creditConsumed = claimed.id;
     }
   }
 
-  // ── Inserir laudo ───────────────────────────────────────────
-  const { data, error } = await supabase
+  // ── Inserir laudo (service client — bypassa RLS, INSERT bloqueado pro client) ──
+  const service = createServiceClient();
+  const { data, error } = await service
     .from("laudos")
     .insert({ user_id: user.id, brand, model, year, km, condition, asking_price, state, tipo })
     .select("id")
     .single();
 
   if (error) {
+    // Rollback: libera crédito se insert falhou
+    if (creditConsumed) {
+      await supabase
+        .from("laudo_credits")
+        .update({ used_at: null })
+        .eq("id", creditConsumed);
+    }
     return { error: "Erro ao salvar. Tente novamente." };
-  }
-
-  // ── Consumir crédito (se necessário) ────────────────────────
-  if (creditToConsume) {
-    await supabase
-      .from("laudo_credits")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", creditToConsume)
-      .is("used_at", null); // garante que não consome crédito já usado (race condition)
   }
 
   return { id: data.id };

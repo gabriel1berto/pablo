@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const maxDuration = 120;
@@ -37,11 +38,20 @@ export async function POST(req: Request) {
   return run(req);
 }
 
+function verifyAuth(req: Request): boolean {
+  const auth = req.headers.get("authorization");
+  const token = auth?.replace("Bearer ", "");
+  const expected = process.env.SEED_API_KEY;
+  if (!token || !expected) return false;
+  try {
+    return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch {
+    return false; // Lengths differ
+  }
+}
+
 async function run(req: Request) {
-  // Simple auth — check for a secret
-  const { searchParams } = new URL(req.url);
-  const key = searchParams.get("key");
-  if (key !== process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-8)) {
+  if (!verifyAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

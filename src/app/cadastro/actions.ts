@@ -2,18 +2,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
-async function siteUrl() {
-  const h = await headers();
-  const host = h.get("host") ?? "localhost:3000";
-  const proto = host.includes("localhost") ? "http" : "https";
-  return `${proto}://${host}`;
+function siteUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
 export async function signInWithGoogle() {
   const supabase = await createClient();
-  const base = await siteUrl();
+  const base = siteUrl();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -63,7 +59,9 @@ export async function resetPassword(formData: FormData) {
   if (!email) return { error: "Preencha o e-mail." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl()}/auth/callback`,
+  });
 
   if (error) return { error: error.message };
   return { success: true };
