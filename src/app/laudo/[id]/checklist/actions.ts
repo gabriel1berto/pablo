@@ -16,12 +16,16 @@ export async function salvarChecklist(laudoId: string, formData: FormData) {
 
   const items = allIds.map((id) => {
     const state = (formData.get(`item_state_${id}`) as string) || "nd";
+    const photoUrl = (formData.get(`item_photo_${id}`) as string) || null;
+    const aiAnalysis = (formData.get(`item_analysis_${id}`) as string) || null;
     return {
       laudo_id: laudoId,
       category: "checklist",
       item_key: id,
       checked: state === "ok",
       notes: state, // 'ok' | 'problema' | 'nd'
+      photo_url: photoUrl,
+      ai_analysis: aiAnalysis,
     };
   });
 
