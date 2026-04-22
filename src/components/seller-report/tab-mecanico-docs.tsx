@@ -189,7 +189,7 @@ function MediaCard({ media, mediaKey, title, type }: { media: ReportData["media"
         )}
         {m?.duration_seconds && (
           <span style={{ position: "absolute", bottom: 4, right: 4, background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 9, padding: "1px 5px", borderRadius: 3 }}>
-            0:{String(m.duration_seconds).padStart(2, "0")}
+            {Math.floor(m.duration_seconds / 60)}:{String(m.duration_seconds % 60).padStart(2, "0")}
           </span>
         )}
       </div>

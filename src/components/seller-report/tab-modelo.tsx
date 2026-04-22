@@ -58,10 +58,10 @@ export function TabModelo({ data }: { data: ReportData }) {
               </div>
             </div>
 
-            {/* Evidência */}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 10, color: C.textTer, marginBottom: 4 }}>Evidência:</div>
-              {issueMedia ? (
+            {/* Evidência (só mostra se houver mídia associada) */}
+            {issueMedia && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 10, color: C.textTer, marginBottom: 4 }}>Evidência:</div>
                 <div style={{ borderRadius: 6, overflow: "hidden" }}>
                   {issueMedia.media_type === "video" ? (
                     <div style={{ aspectRatio: "16/9", background: C.videoBg, position: "relative" }}>
@@ -77,12 +77,8 @@ export function TabModelo({ data }: { data: ReportData }) {
                     </div>
                   )}
                 </div>
-              ) : (
-                <div style={{ background: C.redBg, padding: "6px 10px", borderRadius: 4, fontSize: 11, color: C.redText }}>
-                  Nenhuma enviada ⚠
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Contexto */}
             {(issue.description || issue.repair_cost) && (

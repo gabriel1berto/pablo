@@ -33,6 +33,16 @@ export async function saveStationItems(
 
   const service = createServiceClient();
 
+  // Limpar damages antigos antes de reupsert (evita orphans com item_key damage_N)
+  const damageItems = items.filter((i) => i.item_type === "damage");
+  if (damageItems.length > 0 || tab === "externo") {
+    await service.from("seller_inspection_items")
+      .delete()
+      .eq("laudo_id", laudoId)
+      .eq("tab", tab)
+      .eq("item_type", "damage");
+  }
+
   for (const item of items) {
     const { error } = await service
       .from("seller_inspection_items")
@@ -162,8 +172,8 @@ export async function finalizarLaudo(laudoId: string) {
   };
 
   const score = calcOverallScore(tabScores);
-  const criticalIssueCount = carIssues.filter((i) => i.severity === "critical").length;
-  const transparency = calcTransparency(sellerItems, sellerMedia, criticalIssueCount);
+  // Upload por dano/modelo não implementado ainda — passar 0 pra não inflar required
+  const transparency = calcTransparency(sellerItems, sellerMedia, 0);
 
   // Persistir
   const { error: updateError } = await service

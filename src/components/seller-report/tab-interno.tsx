@@ -8,7 +8,7 @@ export function TabInterno({ data }: { data: ReportData }) {
   const intMedia = media.filter((m) => m.tab === "interno");
   const photoCount = intMedia.length;
   const ressalvas = intItems.filter((i) => {
-    const bad = ["nao_funciona", "funciona_fraco", "algum_defeito", "rasgo_mancha", "descolando", "manchado", "vazio"];
+    const bad = ["nao_funciona", "funciona_fraco", "algum_defeito", "alguma_defeito", "rasgo_mancha", "descolando", "manchado", "vazio"];
     return i.response && bad.includes(i.response);
   }).length;
 

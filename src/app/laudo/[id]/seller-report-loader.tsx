@@ -22,7 +22,9 @@ export async function SellerReportLoader({ id, laudo }: Props) {
   const { data: issues } = await service
     .from("car_issues")
     .select("id, title, description, severity, category, repair_cost")
-    .ilike("model_pattern", modelKey);
+    .ilike("model_pattern", modelKey)
+    .order("severity", { ascending: true })
+    .order("sort_order");
 
   // WhatsApp do vendedor
   let sellerWhatsapp: string | null = null;

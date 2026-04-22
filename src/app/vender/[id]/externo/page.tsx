@@ -157,7 +157,7 @@ export default function ExternoPage() {
         <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>
           {saving ? "Salvando..." : "Próximo: Interior →"}
         </button>
-        <Link href="/laudos" style={btnSecondary}>Salvar e sair</Link>
+        <Link href="/laudos" style={btnSecondary}>Sair sem salvar</Link>
       </div>
     </main>
   );

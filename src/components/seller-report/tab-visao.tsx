@@ -196,9 +196,13 @@ function buildAlertas(items: { item_key: string; item_type: string; response: st
   const sin = items.find((i) => i.item_key === "sinistro");
   if (sin?.response === "grave") alertas.push({ title: "Sinistro grave declarado", detail: "verifique estrutura + laudo de chassi" });
   const freio = items.find((i) => i.item_key === "freio");
-  if (freio?.response === "ruido") alertas.push({ title: "Freio com ruído declarado", detail: "pastilhas — verificar presencialmente" });
-  const pneuBad = items.filter((i) => i.item_key.startsWith("pneu_") && i.response === "meia_vida");
-  if (pneuBad.length > 0) alertas.push({ title: `Pneus ${pneuBad.length > 1 ? "traseiros" : ""} em meia-vida`, detail: "substituição prevista" });
+  if (freio?.response === "pedal_mole") alertas.push({ title: "Freio com pedal mole", detail: "verificar fluido e pastilhas presencialmente" });
+  else if (freio?.response === "puxa_lado") alertas.push({ title: "Freio puxa pro lado", detail: "verificar discos e pinças presencialmente" });
+  else if (freio?.response === "ruido") alertas.push({ title: "Freio com ruído declarado", detail: "pastilhas — verificar presencialmente" });
+  const pneuCareca = items.filter((i) => ["pneu_de", "pneu_dd", "pneu_te", "pneu_td"].includes(i.item_key) && i.response === "careca");
+  const pneuMeiaVida = items.filter((i) => ["pneu_de", "pneu_dd", "pneu_te", "pneu_td"].includes(i.item_key) && i.response === "meia_vida");
+  if (pneuCareca.length > 0) alertas.push({ title: `${pneuCareca.length} pneu${pneuCareca.length > 1 ? "s" : ""} careca${pneuCareca.length > 1 ? "s" : ""}`, detail: "substituição imediata necessária" });
+  else if (pneuMeiaVida.length > 0) alertas.push({ title: `${pneuMeiaVida.length} pneu${pneuMeiaVida.length > 1 ? "s" : ""} em meia-vida`, detail: "substituição prevista" });
   return alertas;
 }
 

@@ -45,11 +45,11 @@ const PNEU_STATE_PENALTIES: Record<string, number> = {
 
 const INTERNO_PENALTIES: Record<string, Record<string, number>> = {
   ar_condicionado: { nao_funciona: -2.0, funciona_fraco: -1.0 },
-  luzes_motor: { sim: -2.5 },
-  luzes_abs: { sim: -1.5 },
-  luzes_airbag: { sim: -1.5 },
+  vidros: { algum_defeito: -0.5 },
+  travas: { alguma_defeito: -0.5 },
   bancos: { rasgo_mancha: -1.0 },
-  portamalas: { vazio: -0.5 },
+  teto_interno: { descolando: -0.5, manchado: -0.3 },
+  portamalas_conteudo: { vazio: -0.5 },
 };
 
 const MECANICO_PENALTIES: Record<string, Record<string, number>> = {
@@ -271,17 +271,10 @@ export function calcTransparency(
     if (media.some((m) => m.media_key === key)) delivered++;
   }
 
-  // Fotos de dano (1 por dano declarado)
-  const damages = items.filter((i) => i.item_type === "damage");
-  for (const d of damages) {
-    required++;
-    if (media.some((m) => m.item_id === parseInt(d.item_key.split("_").pop() ?? "0"))) delivered++;
-  }
-
-  // Tab 5: 1 evidência por item crítico do modelo
-  required += modelIssueCount;
-  const modelMedia = media.filter((m) => m.tab === "modelo");
-  delivered += Math.min(modelMedia.length, modelIssueCount);
+  // Fotos de dano e evidências do modelo:
+  // Upload por dano e por item do modelo ainda não implementado.
+  // Quando implementado, descomentar e ajustar o matching.
+  // Por ora, transparência conta apenas fotos/vídeos das estações.
 
   const pct = required > 0 ? Math.round((delivered / required) * 100) : 100;
   return { pct, delivered, required };

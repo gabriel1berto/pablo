@@ -19,7 +19,9 @@ export async function generateMetadata({
   if (!laudo) return { title: "Laudo Pablo" };
 
   const title = `${laudo.brand} ${laudo.model} ${laudo.year} — Score ${laudo.score?.toFixed(1)}/10`;
-  const description = `${laudo.verdict} · Laudo Pablo — avaliação independente de veículo usado.`;
+  const description = laudo.verdict
+    ? `${laudo.verdict} · Laudo Pablo — avaliação independente de veículo usado.`
+    : `Condition Report Pablo — ${laudo.brand} ${laudo.model} ${laudo.year}`;
 
   return {
     title,
