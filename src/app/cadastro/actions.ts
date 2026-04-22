@@ -18,9 +18,9 @@ export async function signInWithGoogle() {
   });
 
   if (error || !data.url) {
-    redirect("/login");
+    return { url: null };
   }
-  redirect(data.url);
+  return { url: data.url };
 }
 
 export async function signUp(formData: FormData) {
