@@ -65,7 +65,7 @@ export async function criarLaudo(formData: FormData) {
   const service = createServiceClient();
   const { data, error } = await service
     .from("laudos")
-    .insert({ user_id: user.id, brand, model, year, km, condition, asking_price, state, tipo })
+    .insert({ user_id: user.id, brand, model, year, km, condition, asking_price, state, tipo, score_version: tipo === "vendedor" ? "v2" : "v1" })
     .select("id")
     .single();
 

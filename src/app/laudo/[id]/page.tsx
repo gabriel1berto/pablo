@@ -28,6 +28,8 @@ export async function generateMetadata({
   };
 }
 
+import { SellerReportLoader } from "./seller-report-loader";
+
 import {
   CAUTELAR_LABEL, CAUTELAR_DETAIL, CAT_LABEL,
   verdict, fmt, fmtDate, buildHeroContext, buildSteps,
@@ -66,7 +68,7 @@ export default async function LaudoPublicoPage({
 
   const { data: laudo } = await service
     .from("laudos")
-    .select("id, user_id, brand, model, year, km, score, verdict, asking_price, fipe_price, state, created_at, tipo")
+    .select("id, user_id, brand, model, year, km, score, verdict, asking_price, fipe_price, state, created_at, tipo, score_version, tab_scores, transparency_pct")
     .eq("id", id)
     .single();
 
@@ -85,6 +87,15 @@ export default async function LaudoPublicoPage({
   }
 
   const isOwner = user?.id === laudo.user_id;
+
+  // ── Branch: Relatório Vendedor v2 ──────────────────────
+  if (laudo.score_version === "v2") {
+    return (
+      <main style={{ minHeight: "100vh", background: "#F5F4F0", padding: "16px 0" }}>
+        <SellerReportLoader id={id} laudo={laudo} />
+      </main>
+    );
+  }
 
   if (!laudo.score) {
     return (

@@ -174,6 +174,8 @@ export default function VeiculoForm() {
     if (result.error) {
       setErro(result.error);
       setStatus("error");
+    } else if (tipo === "vendedor") {
+      router.push(`/vender/${result.id}/externo`);
     } else {
       router.push(`/laudo/${result.id}/checklist`);
     }
