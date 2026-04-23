@@ -53,8 +53,8 @@ export default function ModeloPage() {
     const finalResult = await finalizarLaudo(id);
     if (finalResult.error) { setError(finalResult.error); setSaving(false); return; }
 
-    // Redirecionar pro relatório público
-    router.push(`/laudo/${id}`);
+    // Redirecionar pra página de conclusão com texto pro anúncio
+    router.push(`/vender/${id}/concluido`);
   }
 
   return (

@@ -42,9 +42,9 @@ export async function saveStationItems(
   laudoId: string,
   tab: string,
   items: { section: string; item_key: string; item_type: string; response: string | null; car_issue_id?: number | null }[]
-) {
+): Promise<{ error: string | null; success: boolean }> {
   const { error: authError } = await verifyOwner(laudoId);
-  if (authError) return { error: authError };
+  if (authError) return { error: authError, success: false };
 
   const service = createServiceClient();
 
@@ -70,15 +70,15 @@ export async function saveStationItems(
         response: item.response,
         car_issue_id: item.car_issue_id ?? null,
       }, { onConflict: "laudo_id,item_key" });
-    if (error) return { error: "Erro ao salvar: " + error.message };
+    if (error) return { error: "Erro ao salvar: " + error.message, success: false };
   }
 
-  return { success: true };
+  return { error: null, success: true };
 }
 
 // ── Upload de mídia ─────────────────────────────────────
 
-export async function uploadMedia(formData: FormData) {
+export async function uploadMedia(formData: FormData): Promise<{ error: string | null; publicUrl: string | null }> {
   const laudoId = formData.get("laudoId") as string;
   const tab = formData.get("tab") as string;
   const mediaKey = formData.get("mediaKey") as string;
@@ -87,11 +87,11 @@ export async function uploadMedia(formData: FormData) {
   const file = formData.get("file") as File;
 
   if (!file || !laudoId || !tab || !mediaKey || !mediaType) {
-    return { error: "Dados incompletos." };
+    return { error: "Dados incompletos.", publicUrl: null };
   }
 
   const { error: authError, user } = await verifyOwner(laudoId);
-  if (authError || !user) return { error: authError ?? "Não autenticado." };
+  if (authError || !user) return { error: authError ?? "Não autenticado.", publicUrl: null };
 
   const service = createServiceClient();
   const ext = file.name.split(".").pop() ?? "bin";
@@ -102,7 +102,7 @@ export async function uploadMedia(formData: FormData) {
     .from("seller-media")
     .upload(path, file, { upsert: true, contentType: file.type });
 
-  if (uploadError) return { error: "Erro no upload: " + uploadError.message };
+  if (uploadError) return { error: "Erro no upload: " + uploadError.message, publicUrl: null };
 
   const { data: urlData } = service.storage.from("seller-media").getPublicUrl(path);
   const publicUrl = urlData.publicUrl;
@@ -126,16 +126,16 @@ export async function uploadMedia(formData: FormData) {
       item_id: itemId ? parseInt(itemId) : null,
     });
 
-  if (insertError) return { error: "Erro ao registrar mídia: " + insertError.message };
+  if (insertError) return { error: "Erro ao registrar mídia: " + insertError.message, publicUrl: null };
 
-  return { success: true, publicUrl };
+  return { error: null, publicUrl };
 }
 
 // ── Finalizar laudo: calcular scores ────────────────────
 
-export async function finalizarLaudo(laudoId: string) {
+export async function finalizarLaudo(laudoId: string): Promise<{ error: string | null; success: boolean; score?: number; tabScores?: Record<string, number>; transparency?: { pct: number; delivered: number; required: number } }> {
   const { error: authError } = await verifyOwner(laudoId);
-  if (authError) return { error: authError };
+  if (authError) return { error: authError, success: false };
 
   const service = createServiceClient();
 
@@ -146,7 +146,7 @@ export async function finalizarLaudo(laudoId: string) {
   ]);
 
   const { data: laudo } = await service.from("laudos").select("model").eq("id", laudoId).single();
-  if (!laudo) return { error: "Laudo não encontrado." };
+  if (!laudo) return { error: "Laudo não encontrado.", success: false };
 
   // Buscar issues do modelo
   const modelKey = `%${laudo.model.toLowerCase().replace(/\s+/g, "%")}%`;
@@ -201,7 +201,7 @@ export async function finalizarLaudo(laudoId: string) {
     })
     .eq("id", laudoId);
 
-  if (updateError) return { error: "Erro ao salvar score: " + updateError.message };
+  if (updateError) return { error: "Erro ao salvar score: " + updateError.message, success: false };
 
-  return { success: true, score, tabScores, transparency };
+  return { error: null, success: true, score, tabScores, transparency };
 }
