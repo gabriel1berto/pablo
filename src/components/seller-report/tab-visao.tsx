@@ -219,7 +219,7 @@ function getTabStatus(tab: string, scores: Record<string, number>, items: { tab:
   return s >= 9 ? "ok" : "warn";
 }
 
-function getTabDetail(tab: string, scores: Record<string, number>, items: { tab: string; item_type: string; response: string | null }[]): string {
+function getTabDetail(tab: string, scores: Record<string, number>, items: { tab: string; item_type: string; item_key: string; response: string | null }[]): string {
   const tabItems = items.filter((i) => i.tab === tab);
   if (tabItems.length === 0) return "não preenchido";
   const s = scores[tab];
