@@ -178,8 +178,13 @@ function countRessalvasSimple(items: { item_type: string; item_key: string; resp
     if (i.response && badMec.includes(i.response)) n++;
   }
   const pneuBad = ["careca", "meia_vida"];
-  for (const i of items.filter((i) => i.item_key.startsWith("pneu_"))) {
+  for (const i of items.filter((i) => ["pneu_de", "pneu_dd", "pneu_te", "pneu_td"].includes(i.item_key))) {
     if (i.response && pneuBad.includes(i.response)) n++;
+  }
+  // Luzes do painel
+  const luzes = items.find((i) => i.item_key === "luzes_painel");
+  if (luzes?.response) {
+    try { const checked: string[] = JSON.parse(luzes.response); n += checked.length; } catch {}
   }
   return n;
 }
@@ -220,6 +225,14 @@ function getTabDetail(tab: string, scores: Record<string, number>, items: { tab:
   const s = scores[tab];
   if (s === undefined) return "não preenchido";
   if (s >= 9) return "sem ressalvas";
-  const badCount = tabItems.filter((i) => i.item_type === "damage" || (i.response && !["ok", "nao", "nunca", "liga_normal", "troca_suave", "leve", "normal", "sem_barulho", "pegando_meio", "bom", "nenhuma", "pago", "quitado", "nunca_teve", "presente", "sim", "nao_ha", "ja_feito", "funciona_gelando", "todos_ok", "todas_ok", "originais_sem_dano", "presente_calibrado", "original"].includes(i.response!))).length;
+  const goodResponses = ["ok", "nao", "nunca", "liga_normal", "troca_suave", "leve", "normal", "sem_barulho", "pegando_meio", "bom", "novo", "nenhuma", "pago", "quitado", "nunca_teve", "presente", "sim", "nao_ha", "ja_feito", "funciona_gelando", "todos_ok", "todas_ok", "originais_sem_dano", "presente_calibrado", "presente_nao_verificado", "original", "sem_danos", "desgaste_leve", "estepe_ferramentas", "so_estepe", "nao_tem", "manuais", "manual", "automatico"];
+  const badCount = tabItems.filter((i) => {
+    if (i.item_type === "damage") return true;
+    if (i.item_key === "luzes_painel") {
+      try { const arr = JSON.parse(i.response ?? "[]"); return arr.length > 0; } catch { return false; }
+    }
+    if (!i.response) return false;
+    return !goodResponses.includes(i.response);
+  }).length;
   return `${badCount} ressalva${badCount !== 1 ? "s" : ""}`;
 }

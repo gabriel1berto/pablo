@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveStationItems } from "../actions";
+import { saveStationItems, loadStationItems } from "../actions";
 import { Stepper, PhotoUpload, Dropdown, pageStyle, btnPrimary, btnSecondary, sectionTitle, C } from "../components";
 
 const DAMAGE_TYPES = [
@@ -40,6 +40,26 @@ export default function ExternoPage() {
   const [estepe, setEstepe] = useState("");
   const [puxaLado, setPuxaLado] = useState("");
 
+  // Carregar dados existentes
+  useEffect(() => {
+    loadStationItems(id, "externo").then(({ items }) => {
+      for (const i of items) {
+        if (i.item_key === "pintura") setPintura(i.response ?? "");
+        if (i.item_key === "pneu_de") setPneuDE(i.response ?? "");
+        if (i.item_key === "pneu_dd") setPneuDD(i.response ?? "");
+        if (i.item_key === "pneu_te") setPneuTE(i.response ?? "");
+        if (i.item_key === "pneu_td") setPneuTD(i.response ?? "");
+        if (i.item_key === "pneus_mesma_marca") setMesmaMarca(i.response ?? "");
+        if (i.item_key === "rodas") setRodas(i.response ?? "");
+        if (i.item_key === "estepe") setEstepe(i.response ?? "");
+        if (i.item_key === "puxa_lado") setPuxaLado(i.response ?? "");
+        if (i.item_type === "damage" && i.response && i.section) {
+          setDamages((prev) => [...prev, { area: i.section, type: i.response! }]);
+        }
+      }
+    });
+  }, [id]);
+
   function addDamage() {
     setDamages([...damages, { area: "", type: "" }]);
   }
@@ -48,10 +68,11 @@ export default function ExternoPage() {
     setSaving(true);
     setError("");
 
+    const validDamages = damages.filter((d) => d.area && d.type);
     const items = [
       { section: "exterior", item_key: "pintura", item_type: "dropdown", response: pintura || null },
-      ...damages.map((d, i) => ({
-        section: d.area || "exterior", item_key: `damage_${i}`, item_type: "damage" as const, response: d.type || null,
+      ...validDamages.map((d, i) => ({
+        section: d.area, item_key: `damage_${i}`, item_type: "damage" as const, response: d.type,
       })),
       { section: "pneus", item_key: "pneu_de", item_type: "dropdown", response: pneuDE || null },
       { section: "pneus", item_key: "pneu_dd", item_type: "dropdown", response: pneuDD || null },
@@ -154,7 +175,7 @@ export default function ExternoPage() {
       {error && <p style={{ fontSize: 13, color: "#A32D2D", marginTop: 8 }}>{error}</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
-        <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>
+        <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
           {saving ? "Salvando..." : "Próximo: Interior →"}
         </button>
         <Link href="/laudos" style={btnSecondary}>Sair sem salvar</Link>

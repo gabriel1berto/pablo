@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveStationItems } from "../actions";
+import { saveStationItems, loadStationItems } from "../actions";
 import { Stepper, PhotoUpload, Dropdown, pageStyle, btnPrimary, btnSecondary, sectionTitle, C } from "../components";
 
 export default function InternoPage() {
@@ -19,6 +19,20 @@ export default function InternoPage() {
   const [bancos, setBancos] = useState("");
   const [tetoInterno, setTetoInterno] = useState("");
   const [portamalas, setPortamalas] = useState("");
+
+  useEffect(() => {
+    loadStationItems(id, "interno").then(({ items }) => {
+      for (const i of items) {
+        if (i.item_key === "ar_condicionado") setAc(i.response ?? "");
+        if (i.item_key === "vidros") setVidros(i.response ?? "");
+        if (i.item_key === "travas") setTravas(i.response ?? "");
+        if (i.item_key === "luzes_painel" && i.response) { try { setLuzes(JSON.parse(i.response)); } catch {} }
+        if (i.item_key === "bancos") setBancos(i.response ?? "");
+        if (i.item_key === "teto_interno") setTetoInterno(i.response ?? "");
+        if (i.item_key === "portamalas_conteudo") setPortamalas(i.response ?? "");
+      }
+    });
+  }, [id]);
 
   function toggleLuz(l: string) {
     setLuzes((prev) => prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]);
@@ -122,7 +136,7 @@ export default function InternoPage() {
       {error && <p style={{ fontSize: 13, color: "#A32D2D", marginTop: 8 }}>{error}</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
-        <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>
+        <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
           {saving ? "Salvando..." : "Próximo: Mecânico →"}
         </button>
         <Link href={`/vender/${id}/externo`} style={btnSecondary}>← Voltar</Link>

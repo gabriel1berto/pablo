@@ -88,10 +88,12 @@ export function PhotoUpload({
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
     setUploading(true);
+    setError(null);
     const fd = new FormData();
     fd.set("laudoId", laudoId);
     fd.set("tab", tab);
@@ -102,6 +104,8 @@ export function PhotoUpload({
     if (result.publicUrl) {
       setUrl(result.publicUrl);
       onUploaded?.(result.publicUrl);
+    } else {
+      setError(result.error ?? "Erro no upload");
     }
     setUploading(false);
   }
@@ -111,7 +115,7 @@ export function PhotoUpload({
       onClick={() => inputRef.current?.click()}
       style={{
         aspectRatio: "3/2", borderRadius: 8, overflow: "hidden",
-        background: url ? "none" : C.bgSec, border: `1px dashed ${C.border}`,
+        background: url ? "none" : C.bgSec, border: `1px dashed ${error ? "#A32D2D" : C.border}`,
         cursor: "pointer", position: "relative",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       }}
@@ -121,8 +125,8 @@ export function PhotoUpload({
       ) : (
         <>
           <span style={{ fontSize: 24, color: C.textTer }}>📷</span>
-          <span style={{ fontSize: 11, color: C.textTer, marginTop: 4 }}>
-            {uploading ? "Enviando..." : label}
+          <span style={{ fontSize: 11, color: error ? "#A32D2D" : C.textTer, marginTop: 4 }}>
+            {uploading ? "Enviando..." : error ?? label}
           </span>
         </>
       )}
@@ -144,10 +148,12 @@ export function VideoUpload({
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
     setUploading(true);
+    setError(null);
     const fd = new FormData();
     fd.set("laudoId", laudoId);
     fd.set("tab", tab);
@@ -155,7 +161,11 @@ export function VideoUpload({
     fd.set("mediaType", "video");
     fd.set("file", file);
     const result = await uploadMedia(fd);
-    if (result.publicUrl) setUrl(result.publicUrl);
+    if (result.publicUrl) {
+      setUrl(result.publicUrl);
+    } else {
+      setError(result.error ?? "Erro no upload");
+    }
     setUploading(false);
   }
 
@@ -179,8 +189,8 @@ export function VideoUpload({
           }}>
             <span style={{ fontSize: 20 }}>🎥</span>
           </div>
-          <span style={{ fontSize: 11, color: "#ccc", marginTop: 8 }}>
-            {uploading ? "Enviando..." : `${label} (mín. ${minSeconds}s)`}
+          <span style={{ fontSize: 11, color: error ? "#A32D2D" : "#ccc", marginTop: 8 }}>
+            {uploading ? "Enviando..." : error ?? `${label} (mín. ${minSeconds}s)`}
           </span>
         </>
       )}

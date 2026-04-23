@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveStationItems } from "../actions";
+import { saveStationItems, loadStationItems } from "../actions";
 import { Stepper, PhotoUpload, VideoUpload, Dropdown, pageStyle, btnPrimary, btnSecondary, sectionTitle, C } from "../components";
 
 export default function MecanicoPage() {
@@ -32,6 +32,28 @@ export default function MecanicoPage() {
   const [unicoDono, setUnicoDono] = useState("");
   const [manual, setManual] = useState("");
   const [chaveReserva, setChaveReserva] = useState("");
+
+  useEffect(() => {
+    loadStationItems(id, "mecanico_docs").then(({ items }) => {
+      for (const i of items) {
+        if (i.item_key === "transmissao") setTransmissao(i.response ?? "");
+        if (i.item_key === "motor") setMotor(i.response ?? "");
+        if (i.item_key === "cambio") setCambio(i.response ?? "");
+        if (i.item_key === "direcao") setDirecao(i.response ?? "");
+        if (i.item_key === "freio") setFreio(i.response ?? "");
+        if (i.item_key === "embreagem") setEmbreagem(i.response ?? "");
+        if (i.item_key === "suspensao") setSuspensao(i.response ?? "");
+        if (i.item_key === "ipva") setIpva(i.response ?? "");
+        if (i.item_key === "multas") setMultas(i.response ?? "");
+        if (i.item_key === "financiamento") setFinanciamento(i.response ?? "");
+        if (i.item_key === "sinistro") setSinistro(i.response ?? "");
+        if (i.item_key === "recall") setRecall(i.response ?? "");
+        if (i.item_key === "unico_dono") setUnicoDono(i.response ?? "");
+        if (i.item_key === "manual_proprietario") setManual(i.response ?? "");
+        if (i.item_key === "chave_reserva") setChaveReserva(i.response ?? "");
+      }
+    });
+  }, [id]);
 
   async function handleSave() {
     if (!transmissao) { setError("Informe o tipo de câmbio."); return; }
@@ -164,7 +186,7 @@ export default function MecanicoPage() {
       {error && <p style={{ fontSize: 13, color: "#A32D2D", marginTop: 8 }}>{error}</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
-        <button onClick={handleSave} disabled={saving || !transmissao} style={{ ...btnPrimary, opacity: saving || !transmissao ? 0.7 : 1 }}>
+        <button onClick={handleSave} disabled={saving || !transmissao} style={{ ...btnPrimary, opacity: saving || !transmissao ? 0.7 : 1, cursor: saving || !transmissao ? "not-allowed" : "pointer" }}>
           {saving ? "Salvando..." : "Próximo: Itens do modelo →"}
         </button>
         <Link href={`/vender/${id}/interno`} style={btnSecondary}>← Voltar</Link>

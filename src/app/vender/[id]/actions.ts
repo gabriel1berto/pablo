@@ -21,6 +21,21 @@ async function verifyOwner(laudoId: string) {
   return { error: null, user };
 }
 
+// ── Carregar respostas existentes ────────────────────────
+
+export async function loadStationItems(laudoId: string, tab: string) {
+  const { error: authError } = await verifyOwner(laudoId);
+  if (authError) return { items: [], media: [] };
+
+  const service = createServiceClient();
+  const [{ data: items }, { data: media }] = await Promise.all([
+    service.from("seller_inspection_items").select("item_key, item_type, response, section").eq("laudo_id", laudoId).eq("tab", tab),
+    service.from("seller_inspection_media").select("media_key, public_url").eq("laudo_id", laudoId).eq("tab", tab),
+  ]);
+
+  return { items: items ?? [], media: media ?? [] };
+}
+
 // ── Salvar respostas de uma estação ─────────────────────
 
 export async function saveStationItems(

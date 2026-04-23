@@ -120,7 +120,7 @@ export default function ModeloPage() {
       {error && <p style={{ fontSize: 13, color: "#A32D2D", marginTop: 8 }}>{error}</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
-        <button onClick={handleFinish} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>
+        <button onClick={handleFinish} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
           {saving ? "Finalizando..." : "Finalizar laudo →"}
         </button>
         <Link href={`/vender/${id}/mecanico`} style={btnSecondary}>← Voltar</Link>
